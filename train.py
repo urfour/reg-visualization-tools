@@ -5,7 +5,7 @@ from xgboost import XGBRegressor
 from sklearn.tree import DecisionTreeRegressor
 import pandas as pd
 import argparse
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 def train_dataset(data : Path, sep : str, save_dir : Path, target : str, categorical_features : list, to_drop : list):
     """ Train a dataset with two models: XGBoost and DecisionTreeRegressor.
@@ -52,7 +52,9 @@ def train_dataset(data : Path, sep : str, save_dir : Path, target : str, categor
         'mse_model1': mean_squared_error(results_df[target], results_df[target+'_model1']),
         'mse_model2': mean_squared_error(results_df[target], results_df[target+'_model2']),
         'rmse_model1': mean_squared_error(results_df[target], results_df[target+'_model1'])**0.5,
-        'rmse_model2': mean_squared_error(results_df[target], results_df[target+'_model2'])**0.5
+        'rmse_model2': mean_squared_error(results_df[target], results_df[target+'_model2'])**0.5,
+        'r2_model1': r2_score(results_df[target], results_df[target+'_model1']),
+        'r2_model2': r2_score(results_df[target], results_df[target+'_model2'])
     }
     metrics_df = pd.DataFrame(metrics, index=[0])
     
