@@ -4,19 +4,13 @@ from typing import Union
 from os import makedirs
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.stats import gaussian_kde, wilcoxon
+from scipy.stats import gaussian_kde
 from os.path import join
-from matplotlib.lines import Line2D
-from scipy.spatial.distance import euclidean, mahalanobis, cityblock
-from scipy import stats
+from scipy.spatial.distance import mahalanobis
 
 plt.rcParams.update({'font.size': 20})
 plt.rcParams['xtick.major.pad'] = '8'
 plt.rcParams['ytick.major.pad'] = '8'
-
-def remove_outliers_z_score(data, threshold=3):
-    z_scores = np.abs(stats.zscore(data))
-    return data[(z_scores < threshold).all(axis=1)]
 
 def plot_predicted_real(data : pd.DataFrame, target_name : str, path : str, models : Union[tuple, str] = 'all', with_outliers = False):
     """ 
@@ -38,8 +32,6 @@ def plot_predicted_real(data : pd.DataFrame, target_name : str, path : str, mode
         if models == 'all':
             to_save = join(path, combination[0]+'_'+combination[1])
         makedirs(to_save, exist_ok=True)
-        if with_outliers:
-            data = remove_outliers_z_score(data, threshold=3)
         extrema = data[f'{target_name}_{combination[0]}'].max()
         fig, ax = plt.subplots(1, 1, figsize=(12, 12))
         ax.set_xlim(0, extrema)
@@ -101,13 +93,14 @@ def plot_predicted_real_multiple(data : pd.DataFrame, target_name : str, path : 
         fig.savefig(join(to_save, 'actual_predicted_two.png'))
         plt.close()
 
-def plot_errors(data : pd.DataFrame, path : str, models : Union[tuple, str] = 'all'):
+def plot_errors(data : pd.DataFrame, path : str, models : Union[tuple, str] = 'all', show_one_individual = True):
     """ Plot only the errors of the models.
     
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
+    show_one_individual (bool, optional): If True, show the coordinates of one individual. Defaults to True.
     """
     if models == 'all':
         all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
@@ -140,13 +133,12 @@ def plot_errors(data : pd.DataFrame, path : str, models : Union[tuple, str] = 'a
         ax.set_xlabel('Errors of model 1')
         ax.set_ylabel('Errors of model 2')
 
-        # Dash-lines to show one individual
-        point = data[['error_'+model for model in combination]].sort_values(by='error_'+combination[0]).iloc[2].to_numpy()
-        ax.plot([-extrema, point[0]], [point[1], point[1]], color='tab:gray', linestyle='--')
-        ax.plot([point[0], point[0]], [-extrema, point[1]], color='tab:gray', linestyle='--')
-
-        # Add coordinates of the point
-        ax.text(point[0]+2, point[1], f'({int(point[0])}, {int(point[1])})', ha='left', va='center', color='tab:gray', fontsize=15)
+        if show_one_individual:
+            point = data[['error_'+model for model in combination]].sort_values(by='error_'+combination[0]).iloc[2].to_numpy()
+            ax.plot([-extrema, point[0]], [point[1], point[1]], color='tab:gray', linestyle='--')
+            ax.plot([point[0], point[0]], [-extrema, point[1]], color='tab:gray', linestyle='--')
+            ax.text(point[0]+2, point[1], f'({int(point[0])}, {int(point[1])})', ha='left', va='center', color='tab:gray', fontsize=15)
+        
         fig.tight_layout()
         fig.savefig(join(to_save, 'errors.png'))
         plt.close()    
@@ -178,6 +170,9 @@ def plot_density(data : pd.DataFrame, path : str, models : Union[tuple, str] = '
         ax.plot([0, 0], [-extrema, extrema], color='black', linewidth=1)
         # Horizontal axis
         ax.plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
+        # Diagonal
+        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], linewidth=1, label="Equal points")
+        ax.plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
@@ -193,8 +188,71 @@ def plot_density(data : pd.DataFrame, path : str, models : Union[tuple, str] = '
         ax.set_xlabel('Errors of model 1')
         ax.set_ylabel('Errors of model 2')
 
+        fig.legend(handles=[equal_points], loc='lower right')
         fig.tight_layout()
         fig.savefig(join(to_save, 'density.png'))
+        plt.close()
+
+def plot_errors_vs_density(data : pd.DataFrame, path : str, models : Union[tuple, str] = 'all'):
+    """ Plot the figure with the errors and the density of the points for the models.
+
+    Parameters:
+    data (pd.DataFrame): The input data containing the actual and predicted values.
+    path (str): The path to save the generated plot(s).
+    models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
+    """
+    if models == 'all':
+        all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
+        all_metrics_combination = list(itertools.combinations(all_metrics, 2))
+    else:
+        all_metrics_combination = [models]
+        to_save = path
+    for combination in all_metrics_combination:
+        if models == 'all':
+            to_save = join(path, combination[0]+'_'+combination[1])
+        makedirs(to_save, exist_ok=True)
+        extrema = max(abs(data[['error_'+model for model in combination]].min().min()), abs(data[['error_'+model for model in combination]].max().max()))
+        fig, ax = plt.subplots(1, 2, figsize=(12, 8), sharey=True)
+
+        ax[0].set_xlim(-extrema, extrema)
+        ax[0].set_ylim(-extrema, extrema)
+        ax[0].set_aspect('equal', adjustable='box')
+
+        ax[0].plot([0, 0], [-extrema, extrema], color='black', linewidth=1)
+        ax[0].plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
+
+        ax[0].plot([-extrema, extrema], [-extrema, extrema], color='tab:blue', linewidth=1)
+        ax[0].plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
+
+        x = data['error_'+combination[0]]
+        y = data['error_'+combination[1]]
+        ax[0].scatter(x, y, c='black', s=100)
+
+        ax[0].set_xlabel('Errors of model 1')
+        ax[0].set_ylabel('Errors of model 2')
+
+        ax[1].set_aspect('equal', adjustable='box')
+        ax[1].plot([0, 0], [-extrema, extrema], color='black', linewidth=1)
+        ax[1].plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
+        equal_points,  = ax[1].plot([-extrema, extrema], [-extrema, extrema], linewidth=1, label="Equal points")
+        ax[1].plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
+        
+        median = (data['error_'+combination[0]].median(), data['error_'+combination[1]].median())
+        distance = np.sqrt((x - median[0])**2 + (y - median[1])**2)
+        data['distance'] = distance
+
+        data = data.sort_values(by='distance')
+        data['percentile'] = data['distance'].apply(lambda x: (len(data[data['distance'] <= x]) / len(data)) * 100)
+        data = data.sort_index()
+
+        density = ax[1].scatter(x, y, c=data['percentile'], s=100, cmap='Spectral')
+        fig.colorbar(density, label="Percentile", fraction=0.028, orientation='horizontal')
+        ax[1].plot(median[0], median[1], 'x', color='black', markersize=5)
+        ax[1].set_xlabel('Errors of model 1')
+
+        fig.legend(handles=[equal_points], loc='upper right')
+        fig.tight_layout()
+        fig.savefig(join(to_save, 'errors_vs_density.png'))
         plt.close()
 
 def plot_mean(data : pd.DataFrame, path : str, models : Union[tuple, str] = 'all'):
@@ -364,6 +422,49 @@ def plot_hourglass(data : pd.DataFrame, path : str, models : Union[tuple, str] =
         fig.savefig(join(to_save, 'hourglass.png'))
         plt.close()
 
+def plot_distributions_alone(data : pd.DataFrame, path : str, models : Union[tuple, str] = 'all'):
+    """ Plot the figure with the distribution of errors for each model alone
+
+    Parameters:
+    data (pd.DataFrame): The input data containing the actual and predicted values.
+    path (str): The path to save the generated plot(s).
+    models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
+    """
+    if models == 'all':
+        all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
+        all_metrics_combination = list(itertools.combinations(all_metrics, 2))
+    else:
+        all_metrics_combination = [models]
+        to_save = path
+    for combination in all_metrics_combination:
+        if models == 'all':
+            to_save = join(path, combination[0]+'_'+combination[1])
+        makedirs(to_save, exist_ok=True)
+        for model in combination:
+            extrema = max(abs(data['error_'+model].min()), abs(data['error_'+model].max()))
+            fig, ax = plt.subplots(1, 1, figsize=(10, 8), sharex=True, sharey=True)
+
+            hist = ax.hist(data['error_'+model], bins=50, alpha=0.8, edgecolor='black', color='tab:orange')
+            ax.grid(True, linestyle='--', alpha=0.5)
+            ticks = ax.get_yticks()
+            ticks = [tick for tick in ticks if tick != 0]
+            ax.set_yticks(ticks)
+
+            ax.set_xlim(-extrema, extrema)
+            ax.set_ylabel('Frequency')
+            ax.set_xlabel('Errors')
+
+            max_bin_height = max(hist[0])
+            max_bin_index = np.where(hist[0] == max_bin_height)[0][0]
+            mode = (hist[1][max_bin_index] + hist[1][max_bin_index + 1]) / 2
+
+            ax.plot([mode, mode], [0, max_bin_height], color='tab:blue', linestyle='--', label=f'Mode')
+            ax.text(mode, max_bin_height, f'{mode:.2f}', ha='center', va='bottom', color='tab:blue', fontsize=15)
+
+            ax.legend()
+            fig.tight_layout()
+            fig.savefig(join(to_save, f'distributions_{model}.png'))
+
 def plot_distributions(data : pd.DataFrame, path : str, models : Union[tuple, str] = 'all'):
     """ Plot the figure with the distributions of the errors for the models
         
@@ -406,7 +507,7 @@ def plot_distributions(data : pd.DataFrame, path : str, models : Union[tuple, st
 def plot_with_proximity(
         data : pd.DataFrame, path : str, models : Union[tuple, str] = 'all', 
         colormap : str = 'Spectral', file_name : str = 'circle_plot.png',
-        distance_metric : str = 'euclidean', with_outliers = False):
+        distance_metric : str = 'euclidean', with_hourglass : bool = False):
     """ Plot the figure with the proximity of the points.
 
     Parameters:
@@ -416,7 +517,7 @@ def plot_with_proximity(
     colormap (str, optional): The colormap to use. Defaults to 'Spectral'.
     file_name (str, optional): The name of the file to save. Defaults to 'circle_plot.png'.
     distance_metric (str, optional): The distance to use. Defaults to 'euclidean'.
-    with_outliers (bool, optional): If True, removes the outliers. Defaults to False.
+    with_hourglass (bool, optional): If True, plot the hourglass. Defaults to False.
     """
     data = data.copy()
     if models == 'all':
@@ -429,8 +530,6 @@ def plot_with_proximity(
         if models == 'all':
             to_save = join(path, combination[0]+'_'+combination[1])
         makedirs(to_save, exist_ok=True)
-        if with_outliers:
-            data = remove_outliers_z_score(data, threshold=3)
         extrema = max(abs(data[['error_'+model for model in combination]].min().min()), abs(data[['error_'+model for model in combination]].max().max()))
         fig, ax = plt.subplots(1, 1, figsize=(16, 16))
         ax.set_xlim(-extrema, extrema)
@@ -445,29 +544,33 @@ def plot_with_proximity(
         equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], label="Equal points")
         ax.plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
-        abs_better, _ = ax.fill(
-            [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
-            c='tab:orange', 
-            alpha=0.2, 
-            label=f"Model 1 is better")
-        ord_better, _ = ax.fill(
-            [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
-            c='tab:green', 
-            alpha=0.2, 
-            label=f"Model 2 is better")
+        if with_hourglass:
+            abs_better, _ = ax.fill(
+                [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
+                c='tab:orange', 
+                alpha=0.2, 
+                label=f"Model 1 is better")
+            ord_better, _ = ax.fill(
+                [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
+                c='tab:green', 
+                alpha=0.2, 
+                label=f"Model 2 is better")
 
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
 
-        # Calculate distance to the mean
-        mean = (data['error_'+combination[0]].mean(), data['error_'+combination[1]].mean())
+        # Calculate distance to the median
+        median = (data['error_'+combination[0]].median(), data['error_'+combination[1]].median())
         if distance_metric == 'manhattan':
-            distance = np.abs(x - mean[0]) + np.abs(y - mean[1])
+            distance = np.abs(x - median[0]) + np.abs(y - median[1])
         elif distance_metric == 'mahalanobis':
             cov = np.cov(data[['error_'+combination[0], 'error_'+combination[1]]], rowvar=False)
-            distance = data[['error_'+combination[0], 'error_'+combination[1]]].apply(lambda x: mahalanobis(x, mean, cov), axis=1)
+            # calculate coordinates for each point
+            distance = []
+            for row in data[['error_'+combination[0], 'error_'+combination[1]]].values:
+                distance.append(mahalanobis(row, median, np.linalg.inv(cov)))
         else:
-            distance = np.sqrt((x - mean[0])**2 + (y - mean[1])**2)
+            distance = np.sqrt((x - median[0])**2 + (y - median[1])**2)
         data['distance'] = distance
 
         data = data.sort_values(by='distance')
@@ -480,12 +583,17 @@ def plot_with_proximity(
         density = ax.scatter(x, y, c=data['percentile'], s=100, cmap=colormap)
         fig.colorbar(density, label="Percentile", fraction=0.030)
 
-        ax.set_xlabel(f'Errors of model {combination[0]}', fontsize=20, labelpad=10)
-        ax.xaxis.label.set_color('tab:orange')
-        ax.set_ylabel(f'Errors of model {combination[1]}', fontsize=20, labelpad=10)
-        ax.yaxis.label.set_color('tab:green')
+        # draw a cross on the median point (median[0], median[1])
+        ax.plot(median[0], median[1], 'x', color='black', markersize=5)
 
-        fig.legend(handles=[abs_better, ord_better, equal_points], loc='lower right')
+        ax.set_xlabel(f'Errors of model 1', fontsize=20, labelpad=10)
+        ax.set_ylabel(f'Errors of model 2', fontsize=20, labelpad=10)
+        if with_hourglass:
+            ax.xaxis.label.set_color('tab:orange')
+            ax.yaxis.label.set_color('tab:green')
+            fig.legend(handles=[abs_better, ord_better], loc='lower right')
+        else:
+            fig.legend(handles=[equal_points], loc='lower right')
         fig.subplots_adjust(left=0.15)
         fig.savefig(join(to_save, file_name))
         plt.close()
@@ -647,26 +755,33 @@ def draw_all_plots(data, path, models, target_name = None):
     plot_hourglass(data=data, path=path, models=models)
     plot_mean(data=data, path=path, models=models)
     plot_mean_density(data=data, path=path, models=models)
+    plot_distributions_alone(data=data, path=path, models=models)
     plot_distributions(data=data, path=path, models=models)
     plot_everything(data=data, path=path, models=models)
     plot_with_proximity(data=data, path=path, models=models)
 
-df = pd.read_csv('results/apartments_results.csv')
-selected_models = 'all'
-target_name = 'price'
-path = 'fig/apartments'
-plot_with_proximity(df, path, models=selected_models, colormap='Spectral', distance_metric='euclidean', file_name='circle_plot_euclidean.png', with_outliers=False)
+df = pd.read_csv('data/errors_vanillalstm.csv')
+selected_models = ('se', 'quad_quad_0.01')
+target_name = 'RUL'
+path = 'fig/vanillalstm'
+plot_density(df, path, models=selected_models)
+plot_with_proximity(df, path, models=selected_models, colormap='Spectral', distance_metric='euclidean', file_name='circle_plot', with_hourglass=False)
+# plot_with_proximity(df, path, models=selected_models, colormap='Spectral', distance_metric='euclidean', file_name='circle_plot_euclidean.png', with_hourglass=False)
+# plot_with_proximity(df, path, models=selected_models, colormap='Spectral', distance_metric='mahalanobis', file_name='circle_plot_mahalanobis.png', with_hourglass=False)
+
+# plot_with_proximity(df, path, models=selected_models, colormap='Spectral', distance_metric='euclidean', file_name='circle_plot_euclidean.png')
 # plot_with_proximity(df, path, models=selected_models, colormap='Spectral', distance_metric='mahalanobis', file_name='circle_plot_mahalanobis.png')
 # plot_with_proximity(df, path, models=selected_models, colormap='Spectral', distance_metric='manhattan', file_name='circle_plot_manhattan.png')
+# plot_distributions_alone(df, path, models=selected_models)
 # draw_all_plots(data=df, target_name=target_name, path=path, models=selected_models)
 
 # df_abalone = pd.read_csv('results/abalone_results.csv')
 # df_bike = pd.read_csv('results/bike_results.csv')
 # df_wine = pd.read_csv('results/wine_results.csv')
-# df_apartments = pd.read_csv('results/apartments_results.csv')
-# selected_models = 'all'
-
 # # draw_all_plots(data=df_abalone, path='fig/abalone', models=selected_models)
 # # draw_all_plots(data=df_bike, path='fig/bike', models=selected_models)
 # # draw_all_plots(data=df_wine, path='fig/wine', models=selected_models)
-# draw_all_plots(data=df_apartments, path='fig/apartments', models=selected_models)
+
+# df_apartments = pd.read_csv('results/apartments_results.csv')
+# selected_models = 'all'
+# plot_errors_vs_density(df_apartments, 'fig/apartments', models=selected_models)
