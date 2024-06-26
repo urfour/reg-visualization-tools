@@ -24,3 +24,29 @@ For instance, for two models predicting the price of houses:
 |--------|--------------|--------------|--------------|--------------|
 | 154000 | 155400       | 1400         | 132600       | -21400       |
 | 98450  | 98420        | -30          | 109500       | 11050        |
+
+The script train.py can be used to train them:
+
+```bash
+python train.py --data <dataset> --target <target>
+```
+
+## Available datasets
+
+- abalone
+
+```bash
+python train.py --data data/abalone.csv --target Rings --save results
+```
+
+- bike
+
+```bash
+python train.py --data data/bike.csv --target cnt --save results --categorical season mnth holiday weekday workingday weathersit --drop instant dteday casual registered atemp
+```
+
+- wine
+
+```bash
+python train.py --data data/wine.csv --sep ';' --target quality --save results
+```
