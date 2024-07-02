@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 from xgboost import XGBRegressor
 from sklearn.tree import DecisionTreeRegressor
 import pandas as pd
+from math import ceil
 import argparse
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
@@ -22,6 +23,7 @@ def train_dataset(data : Path, sep : str, save_dir : Path, target : str, categor
     df = pd.read_csv(data, sep=sep)
     save_dir.mkdir(parents=True, exist_ok=True)
     results_df = pd.DataFrame()
+    metrics = {}
     metrics_df = pd.DataFrame()
 
     if to_drop is not None:
@@ -41,25 +43,34 @@ def train_dataset(data : Path, sep : str, save_dir : Path, target : str, categor
     pred_2 = model2.predict(X_test)
 
     results_df[target] = y_test
-    results_df[target+'_model1'] = pred_1
-    results_df[target+'_model2'] = pred_2
+    results_df[target+'_model1'] = pred_1.round(0)
+    results_df[target+'_model2'] = pred_2.round(0)
     results_df['error_model1'] = results_df[target] - results_df[target+'_model1']
     results_df['error_model2'] = results_df[target] - results_df[target+'_model2']
-
-    metrics = {
-        'mae_model1': mean_absolute_error(results_df[target], results_df[target+'_model1']),
-        'mae_model2': mean_absolute_error(results_df[target], results_df[target+'_model2']),
-        'mse_model1': mean_squared_error(results_df[target], results_df[target+'_model1']),
-        'mse_model2': mean_squared_error(results_df[target], results_df[target+'_model2']),
-        'rmse_model1': mean_squared_error(results_df[target], results_df[target+'_model1'])**0.5,
-        'rmse_model2': mean_squared_error(results_df[target], results_df[target+'_model2'])**0.5,
-        'r2_model1': r2_score(results_df[target], results_df[target+'_model1']),
-        'r2_model2': r2_score(results_df[target], results_df[target+'_model2'])
+    for i in range(1, 3):
+        metrics['model_'+str(i)] = {
+            'mae': mean_absolute_error(results_df[target], results_df[f'{target}_model{i}']),
+            'mse': mean_squared_error(results_df[target], results_df[f'{target}_model{i}']),
+            'rmse': mean_squared_error(results_df[target], results_df[f'{target}_model{i}'])**0.5,
+            'r2_': r2_score(results_df[target], results_df[f'{target}_model{i}'])
     }
-    metrics_df = pd.DataFrame(metrics, index=[0])
-    
+    metrics_df = pd.DataFrame(metrics)
     results_df.to_csv(save_dir / f'{data.stem}_results.csv')
     metrics_df.to_csv(save_dir / f'{data.stem}_metrics.csv')
+
+def metrics_vanillalstm():
+    df = pd.read_csv('data/errors_vanillalstm.csv')
+    models = [model.split('error_')[1] for model in df.columns if 'error_' in model]
+    metrics = {}
+    for model in models:
+        metrics[model] = {
+            'mae': mean_absolute_error(df['RUL'], df[f'RUL_{model}']),
+            'mse': mean_squared_error(df['RUL'], df[f'RUL_{model}']),
+            'rmse': mean_squared_error(df['RUL'], df[f'RUL_{model}'])**0.5,
+            'r2': r2_score(df['RUL'], df[f'RUL_{model}'])
+        }
+    metrics_df = pd.DataFrame(metrics).transpose()
+    metrics_df.to_csv('results/errors_vanillalstm_metrics.csv')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train datasets using XGBoost and DecisionTreeRegressor')
