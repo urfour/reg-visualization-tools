@@ -3,9 +3,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.linear_model import LinearRegression
-from lib.models import CMAPSSTraining
-from lib.losses.pytorch import mse, mae, quad_quad
-from lib.visualization import *
+from utils.models import CMAPSSTraining
+from utils.losses.pytorch import mse, mae, quad_quad
+from utils.visualization import *
 import numpy as np
 from argparse import ArgumentParser
 
