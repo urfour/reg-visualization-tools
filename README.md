@@ -9,6 +9,13 @@ pip install -r requirements.txt
 ```
 
 ## How to use
+### ICTAI
+
+To generate the plots as shown in the ICTAI article, please use the following command:
+```bash
+python ictai.py -train_all -plot
+```
+### Visualizations
 
 The functions defined use a DataFrame containing the predictions and the errors of the models, in the following format:
 
@@ -31,22 +38,3 @@ The script train.py can be used to train them:
 python train.py --data <dataset> --target <target>
 ```
 
-## Available datasets
-
-- abalone
-
-```bash
-python train.py --data data/abalone.csv --target Rings --save results
-```
-
-- bike
-
-```bash
-python train.py --data data/bike.csv --target cnt --save results --categorical season mnth holiday weekday workingday weathersit --drop instant dteday casual registered atemp
-```
-
-- wine
-
-```bash
-python train.py --data data/wine.csv --sep ';' --target quality --save results
-```
