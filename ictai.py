@@ -8,7 +8,6 @@ from utils.losses.pytorch import mse, mae, quad_quad
 from utils.visualization import *
 import numpy as np
 from argparse import ArgumentParser
-
 np.random.seed(0)
 
 ### Generated datasets
@@ -66,6 +65,34 @@ def train_under_over():
     df.to_csv('results/under_over.csv')
     metrics_df = pd.DataFrame(metrics, index=[0])
     metrics_df.to_csv('results/under_over_metrics.csv', index=False)
+
+def train_different_errors():
+    """ Generate data to simulate different errors """
+    n_samples = 1000
+    truth = np.random.rand(n_samples) * 1000
+
+    errors_model_1 = np.linspace(-10, 10, n_samples) * np.sin(np.linspace(0, 2 * np.pi, n_samples))
+    errors_model_2 = np.linspace(10, -10, n_samples) * np.cos(np.linspace(0, 2 * np.pi, n_samples))
+
+    pred1 = truth + errors_model_1
+    pred2 = truth + errors_model_2
+
+    df = pd.DataFrame({
+        'values': truth,
+        'values_model1': pred1,
+        'error_model1': pred1 - truth,
+        'values_model2': pred2,
+        'error_model2': pred2 - truth
+        })
+    metrics = {
+        'rmse_model1': np.sqrt(mean_squared_error(truth, pred1)),
+        'rmse_model2': np.sqrt(mean_squared_error(truth, pred2)),
+        'mae_model1': mean_absolute_error(truth, pred1),
+        'mae_model2': mean_absolute_error(truth, pred2)
+    }
+    df.to_csv('results/different_errors.csv')
+    metrics_df = pd.DataFrame(metrics, index=[0])
+    metrics_df.to_csv('results/different_errors_metrics.csv', index=False)
 
 ### Real datasets
 def train_apartments():
@@ -139,6 +166,7 @@ def train_all():
     """ Train models on all datasets and save results and metrics to csv files """
     train_metrics()
     train_under_over()
+    train_different_errors()
     train_apartments()
     train_cmapss()
 
@@ -146,33 +174,35 @@ def plot_all():
     """ Generate all plots """
     df_biases = pd.read_csv('results/metrics_biases.csv')
     df_under_over = pd.read_csv('results/under_over.csv')
+    df_diff_errors = pd.read_csv('results/different_errors.csv')
     df_cmapss = pd.read_csv('results/errors_cmapss.csv')
     df_apartments = pd.read_csv('results/apartments_results.csv')
     path = 'all_fig'
-    # Generated datasets
-    plot_distributions_alone(data=df_biases, path=path, models=('model1', 'model2'), file_name='fig1.png', model_index=1)
-    plot_distributions(data=df_under_over, path=path, models=('model1', 'model2'), file_name='fig2.png')
+    models_cmapss = ('se', 'quad_quad_0.01')
+    other_models = ('model1', 'model2')
 
-    # C-MAPSS
-    models = ('se', 'quad_quad_0.01')
-    plot_predicted_real(data=df_cmapss, target_name='RUL', path=path, models=models, file_name='fig3.png')
-    plot_distributions_alone(data=df_cmapss, path=path, models=models, file_name='fig4.png')
-    plot_predicted_real_multiple(data=df_cmapss, target_name='RUL', path=path, models=models, file_name='fig5.png')
-    plot_errors(data=df_cmapss, path=path, models=models, show_one_individual=True, index=[47, 800], file_name='fig6.png')
-    plot_errors(data=df_cmapss, path=path, models=models, file_name='fig7.png')
-    plot_hourglass(data=df_cmapss, path=path, models=models, file_name='fig8.png')
-    plot_mean_median(data=df_cmapss, path=path, models=models, file_name='fig9.png')
-    plot_distributions(data=df_cmapss, path=path, models=models, file_name='fig10.png')
-    plot_density_proximity(data=df_cmapss, path=path, models=models, file_name='fig11.png')
-    plot_compared_proximity(data=df_cmapss, path=path, models=models, file_name='fig14.png')
-    # Apartments
-    plot_errors(data=df_apartments, path=path, models=('model1', 'model2'), file_name='fig12.png')
-    plot_with_proximity(data=df_apartments, path=path, models=('model1', 'model2'), file_name='fig13.png', with_hourglass=False)
+    # Generated datasets
+    plot_distributions_alone(data=df_biases, path=path, models=other_models, file_name='fig1.png', model_index=1)
+    plot_distributions(data=df_under_over, path=path, models=other_models, file_name='fig2.png')
+    plot_diff_distributions(data=df_diff_errors, path=path, models=other_models, file_name='fig3.png')
+    # Real datasets
+    plot_predicted_real(data=df_cmapss, target_name='RUL', path=path, models=models_cmapss, file_name='fig4.png')
+    plot_distributions_alone(data=df_cmapss, path=path, models=models_cmapss, file_name='fig5.png')
+    plot_predicted_real_multiple(data=df_cmapss, target_name='RUL', path=path, models=models_cmapss, file_name='fig6.png')
+    plot_errors(data=df_cmapss, path=path, models=models_cmapss, show_one_individual=True, index=[47, 800], file_name='fig7.png')
+    plot_errors(data=df_cmapss, path=path, models=models_cmapss, file_name='fig8.png')
+    plot_hourglass(data=df_cmapss, path=path, models=models_cmapss, file_name='fig9.png')
+    plot_mean_median(data=df_cmapss, path=path, models=models_cmapss, file_name='fig10.png')
+    plot_distributions(data=df_cmapss, path=path, models=models_cmapss, file_name='fig11.png')
+    plot_density_proximity(data=df_cmapss, path=path, models=models_cmapss, file_name='fig12.png')
+    plot_errors(data=df_apartments, path=path, models=other_models, file_name='fig13.png')
+    plot_with_proximity(data=df_apartments, path=path, models=other_models, file_name='fig14.png', with_hourglass=False)
+    plot_compared_proximity(data=df_cmapss, path=path, models=models_cmapss, file_name='fig15.png')
 
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-train', action='store_true', help='Train models')
-    parser.add_argument('--dataset', type=str, default='all', help='Dataset name (metrics, underover, apartments, cmapss, all)')
+    parser.add_argument('--dataset', type=str, default='all', help='Dataset name (metrics, underover, differrors, apartments, cmapss, all)')
     parser.add_argument('-train_all', action='store_true', help='Train all datasets')
     parser.add_argument('-plot', action='store_true', help='Generate all plots')
     args = parser.parse_args()
@@ -183,6 +213,8 @@ if __name__ == '__main__':
             train_metrics()
         elif args.dataset == 'underover':
             train_under_over()
+        elif args.dataset == 'differrors':
+            train_different_errors()
         elif args.dataset == 'apartments':
             train_apartments()
         elif args.dataset == 'cmapss':

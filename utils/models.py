@@ -345,6 +345,6 @@ class CMAPSSTraining():
             to_predict, y = self.create_dataset(to_predict)
             y_pred = self.model(to_predict.cuda()).squeeze(1).cpu().detach().numpy()
             for j in range(len(y_pred)):
-                all_y_pred.append((engine, y[j].item(), y_pred[j].item(), (y_pred[j] - y[j]).item()))
-        df = pd.DataFrame(all_y_pred, columns=['engine', 'RUL', 'RUL_'+loss_name, 'error_'+loss_name])
+                all_y_pred.append((y[j].item(), y_pred[j].item(), (y_pred[j] - y[j]).item()))
+        df = pd.DataFrame(all_y_pred, columns=['RUL', 'RUL_'+loss_name, 'error_'+loss_name])
         return df
