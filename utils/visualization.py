@@ -368,9 +368,6 @@ def plot_mean_median(data : pd.DataFrame, path : str, file_name = 'mean_median.p
 
         ax[0].scatter(x, y, s=100, c='black')
 
-        ax[0].set_xlabel(f'Errors of model 1')
-        ax[0].set_ylabel(f'Errors of model 2')
-
         ax[1].set_xlim(-extrema, extrema)
         ax[1].set_ylim(-extrema, extrema)
         ax[1].set_aspect('equal', adjustable='box')
@@ -391,6 +388,9 @@ def plot_mean_median(data : pd.DataFrame, path : str, file_name = 'mean_median.p
         y = data['error_'+combination[1]]
 
         ax[1].scatter(x, y, s=100, c='black')
+
+        ax[0].set_ylabel(f'Errors of model 2', fontsize=25)
+        fig.text(0.5, 0.27, f'Errors of {combination[0]}', ha='center', va='center', fontsize=25)
 
         fig.legend(handles=[median_line, mean_line, std_line], loc='lower right', bbox_to_anchor=(0.98, 0.1))
         fig.tight_layout()

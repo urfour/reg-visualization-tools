@@ -74,9 +74,9 @@ def metrics_vanillalstm():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train datasets using XGBoost and DecisionTreeRegressor')
-    parser.add_argument('--data', type=str, help='Path to the dataset', required=True)
+    parser.add_argument('-d', '--data', type=str, help='Path to the dataset', required=True)
     parser.add_argument('--sep', type=str, help='Separator for the dataset', default=',')
-    parser.add_argument('--target', type=str, help='Target column', required=True)
+    parser.add_argument('-t', '--target', type=str, help='Target column', required=True)
     parser.add_argument('--save', type=str, help='Path to save the results', default='results')
     parser.add_argument('--categorical', nargs='+', help='Categorical features to be one-hot encoded')
     parser.add_argument('--drop', nargs='+', help='Columns to be dropped')

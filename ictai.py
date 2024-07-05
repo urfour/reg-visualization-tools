@@ -201,23 +201,22 @@ def plot_all():
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('-train', action='store_true', help='Train models')
-    parser.add_argument('--dataset', type=str, default='all', help='Dataset name (metrics, underover, differrors, apartments, cmapss, all)')
-    parser.add_argument('-train_all', action='store_true', help='Train all datasets')
-    parser.add_argument('-plot', action='store_true', help='Generate all plots')
+    parser.add_argument('-t', '--train-dataset', type=str, help='Train the choosen dataset(s). Available: metrics, underover, differrors, apartments, cmapss, all')
+    parser.add_argument('-a', '--train-all', action='store_true', help='Train all datasets')
+    parser.add_argument('-p', '--plot', action='store_true', help='Generate all plots')
     args = parser.parse_args()
-    if args.train:
-        if args.dataset == 'all':
+    if args.train_dataset is not None:
+        if args.train_dataset == 'all':
             train_all()
-        elif args.dataset == 'metrics':
+        elif args.train_dataset == 'metrics':
             train_metrics()
-        elif args.dataset == 'underover':
+        elif args.train_dataset == 'underover':
             train_under_over()
-        elif args.dataset == 'differrors':
+        elif args.train_dataset == 'differrors':
             train_different_errors()
-        elif args.dataset == 'apartments':
+        elif args.train_dataset == 'apartments':
             train_apartments()
-        elif args.dataset == 'cmapss':
+        elif args.train_dataset == 'cmapss':
             train_cmapss()
         else:
             print('Invalid dataset name')
@@ -227,5 +226,5 @@ if __name__ == '__main__':
     if args.plot:
         plot_all()
     else:
-        if not args.train and not args.train_all:
+        if args.train_dataset is None and not args.train_all:
             parser.print_help()

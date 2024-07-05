@@ -9,12 +9,15 @@ pip install -r requirements.txt
 ```
 
 ## How to use
+
 ### ICTAI
 
 To generate the plots as shown in the ICTAI article, please use the following command:
+
 ```bash
-python ictai.py -train_all -plot
+python ictai.py -ap
 ```
+
 ### Visualizations
 
 The functions defined use a DataFrame containing the predictions and the errors of the models, in the following format:
@@ -37,4 +40,3 @@ The script train.py can be used to train them:
 ```bash
 python train.py --data <dataset> --target <target>
 ```
-

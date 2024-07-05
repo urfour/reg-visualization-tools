@@ -44,6 +44,7 @@ class LSTMModel(nn.Module):
         super(LSTMModel, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
         self.linear1 = nn.Linear(hidden_size, 50)
         self.dropout = nn.Dropout(0.2)
@@ -51,8 +52,8 @@ class LSTMModel(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x):
-        h0 = Variable(torch.zeros(self.num_layers, x.size(0), self.hidden_size).cuda())
-        c0 = Variable(torch.zeros(self.num_layers, x.size(0), self.hidden_size).cuda())
+        h0 = Variable(torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device))
+        c0 = Variable(torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device))
 
         out, _ = self.lstm(x, (h0, c0))
         out = self.linear1(out[:, -1, :])
@@ -72,13 +73,14 @@ class VanillaLSTMModel(nn.Module):
         super(VanillaLSTMModel, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
         self.linear = nn.Linear(hidden_size, 1)
         self.relu = nn.ReLU()
 
     def forward(self, x):
-        h0 = Variable(torch.zeros(self.num_layers, x.size(0), self.hidden_size).cuda())
-        c0 = Variable(torch.zeros(self.num_layers, x.size(0), self.hidden_size).cuda())
+        h0 = Variable(torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device))
+        c0 = Variable(torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device))
 
         out, _ = self.lstm(x, (h0, c0))
         out = self.linear(out[:, -1, :])
@@ -126,6 +128,7 @@ class CMAPSSTraining():
         self.window_size = window_size
         self.model_type = model_type
         self.criterion = criterion
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.import_data()
 
     def series_to_supervised(self, set : str, n_in=1, dropnan=True):
@@ -174,16 +177,15 @@ class CMAPSSTraining():
         
         return X_data, np.asarray(y_data)
     
-    def create_dataset(self, data, cuda = True):
+    def create_dataset(self, data):
         """ Create dataset for training
 
         Parameters:
             data (pandas DataFrame): Data to use
-            cuda (bool): Use GPU for training
         """
         X, y = self.create_lstm_data(data.to_numpy(), self.window_size)
-        if cuda:
-            return torch.FloatTensor(X).cuda(), torch.FloatTensor(y).cuda()
+        if self.device == 'cuda':
+            return torch.FloatTensor(X).to(self.device), torch.FloatTensor(y).to(self.device)
         else:
             return torch.FloatTensor(X), torch.FloatTensor(y)
 
@@ -244,11 +246,11 @@ class CMAPSSTraining():
         while training_failed:
             all_losses = []
             if self.model_type == 'cnn':
-                self.model = CNNModel(self.X_train.shape[1]).cuda()
+                self.model = CNNModel(self.X_train.shape[1]).to
             elif self.model_type == 'vanilla':
-                self.model = VanillaLSTMModel(self.X_train.shape[1], hidden_size).cuda()
+                self.model = VanillaLSTMModel(self.X_train.shape[1], hidden_size).to(self.device)
             else:
-                self.model = LSTMModel(self.X_train.shape[2], hidden_size).cuda()
+                self.model = LSTMModel(self.X_train.shape[2], hidden_size).to(self.device)
             optimizer = optim.Adam(self.model.parameters(), lr)
             loader = data.DataLoader(data.TensorDataset(self.X_train, self.y_train), shuffle=False, batch_size=32)
             while current_epoch < epochs:
@@ -257,7 +259,7 @@ class CMAPSSTraining():
                     with tqdm(loader, unit='batch') as tepoch:
                         for X_batch, y_batch in tepoch:
                             tepoch.set_description(f"Epoch {current_epoch+1}")
-                            X_batch, y_batch = X_batch.cuda(), y_batch.cuda()
+                            X_batch, y_batch = X_batch.to(self.device), y_batch.to(self.device)
                             y_pred = self.model(X_batch).squeeze(1)
                             optimizer.zero_grad()
                             loss = self.criterion(y_pred, y_batch)
@@ -268,7 +270,7 @@ class CMAPSSTraining():
                             tepoch.set_postfix(loss=loss.item())
                 else:
                     for X_batch, y_batch in loader:
-                        X_batch, y_batch = X_batch.cuda(), y_batch.cuda()
+                        X_batch, y_batch = X_batch.to(self.device), y_batch.to(self.device)
                         y_pred = self.model(X_batch).squeeze(1)
                         optimizer.zero_grad()
                         loss = self.criterion(y_pred, y_batch)
@@ -343,7 +345,7 @@ class CMAPSSTraining():
             to_predict = self.df_test.loc[(self.df_test['RUL'] < 125) & (self.df_test['engine'] == engine)][self.features_windows]
             to_predict['RUL'] = self.df_test.loc[(self.df_test['RUL'] < 125) & (self.df_test['engine'] == engine)]['RUL']
             to_predict, y = self.create_dataset(to_predict)
-            y_pred = self.model(to_predict.cuda()).squeeze(1).cpu().detach().numpy()
+            y_pred = self.model(to_predict.to(self.device)).squeeze(1).cpu().detach().numpy()
             for j in range(len(y_pred)):
                 all_y_pred.append((y[j].item(), y_pred[j].item(), (y_pred[j] - y[j]).item()))
         df = pd.DataFrame(all_y_pred, columns=['RUL', 'RUL_'+loss_name, 'error_'+loss_name])
