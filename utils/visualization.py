@@ -209,7 +209,8 @@ def plot_density(data : pd.DataFrame, path : str, file_name = 'density.png', mod
         plt.close()
 
 def plot_errors_vs_density(data : pd.DataFrame, path : str, 
-                           file_name = 'errors_vs_density.png', models : Union[tuple, str] = 'all'):
+                           file_name = 'errors_vs_density.png', models : Union[tuple, str] = 'all',
+                           with_hourglass = True):
     """ Plot the figure with the errors and the density of the points for the models.
 
     Parameters:
@@ -217,6 +218,7 @@ def plot_errors_vs_density(data : pd.DataFrame, path : str,
     path (str): The path to save the generated plot(s).
     file_name (str, optional): The name of the file to save the plot. Defaults to 'errors_vs_density.png'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
+    with_hourglass (bool, optional): If True, plot the hourglass. Defaults to True
     """
     if models == 'all':
         all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
@@ -229,11 +231,15 @@ def plot_errors_vs_density(data : pd.DataFrame, path : str,
             to_save = join(path, combination[0]+'_'+combination[1])
         makedirs(to_save, exist_ok=True)
         extrema = max(abs(data[['error_'+model for model in combination]].min().min()), abs(data[['error_'+model for model in combination]].max().max()))
-        fig, ax = plt.subplots(1, 2, figsize=(12, 8), sharey=True)
+        fig, ax = plt.subplots(1, 2, figsize=(18, 18), sharey=True)
 
         ax[0].set_xlim(-extrema, extrema)
         ax[0].set_ylim(-extrema, extrema)
+        ax[1].set_xlim(-extrema, extrema)
+        ax[1].set_ylim(-extrema, extrema)
+        
         ax[0].set_aspect('equal', adjustable='box')
+        ax[1].set_aspect('equal', adjustable='box')
 
         ax[0].plot([0, 0], [-extrema, extrema], color='black', linewidth=1)
         ax[0].plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
@@ -241,14 +247,25 @@ def plot_errors_vs_density(data : pd.DataFrame, path : str,
         ax[0].plot([-extrema, extrema], [-extrema, extrema], color='tab:blue', linewidth=1)
         ax[0].plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
+        if with_hourglass:
+            for axis in ax:
+                abs_better, _ = axis.fill(
+                    [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
+                    c='tab:orange', 
+                    alpha=0.2, 
+                    label=f'Model 1 is better')
+                ord_better, _ = axis.fill(
+                    [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
+                    c='tab:green', 
+                    alpha=0.2, 
+                    label=f'Model 2 is better')
+
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
         ax[0].scatter(x, y, c='black', s=100)
 
-        ax[0].set_xlabel(f'Errors of model 1')
         ax[0].set_ylabel(f'Errors of model 2')
 
-        ax[1].set_aspect('equal', adjustable='box')
         ax[1].plot([0, 0], [-extrema, extrema], color='black', linewidth=1)
         ax[1].plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
         equal_points, = ax[1].plot([-extrema, extrema], [-extrema, extrema], linewidth=1, label="Equal errors")
@@ -263,12 +280,18 @@ def plot_errors_vs_density(data : pd.DataFrame, path : str,
         data = data.sort_index()
 
         density = ax[1].scatter(x, y, c=data['percentile'], s=100, cmap='Spectral')
-        fig.colorbar(density, label="Percentile", fraction=0.028, orientation='horizontal')
+        cbar_ax = fig.add_axes([0.15, 0.2, 0.7, 0.02])
+        fig.colorbar(density, cax=cbar_ax, orientation='horizontal', label="Percentile")
         ax[1].plot(median[0], median[1], 'x', color='black', markersize=5)
-        ax[1].set_xlabel(f'Errors of model 1')
 
-        fig.legend(handles=[equal_points], loc='upper right')
-        fig.tight_layout()
+        if with_hourglass:
+            for axis in ax:
+                axis.yaxis.label.set_color('tab:green')
+            fig.text(0.5, 0.27, f'Errors of model 1', ha='center', va='center', fontsize=25, color='tab:orange')
+            fig.legend(handles=[abs_better, ord_better, equal_points], loc='upper right', bbox_to_anchor=(0.91, 0.8))
+        else:
+            fig.text(0.5, 0.27, f'Errors of model 1', ha='center', va='center', fontsize=25)
+            fig.legend(handles=[equal_points], loc='upper right', bbox_to_anchor=(0.91, 0.73))
         fig.savefig(join(to_save, file_name))
         plt.close()
 
@@ -325,7 +348,9 @@ def plot_mean(data : pd.DataFrame, path : str, file_name = 'mean.png', models : 
         fig.savefig(join(to_save, file_name))
         plt.close()
 
-def plot_mean_median(data : pd.DataFrame, path : str, file_name = 'mean_median.png', models : Union[tuple, str] = 'all'):
+def plot_mean_median(data : pd.DataFrame, path : str, 
+                     file_name = 'mean_median.png', 
+                     models : Union[tuple, str] = 'all', with_hourglass = True):
     """ Plot the figure with the mean dash lines for the models and the median.
 
     Parameters:
@@ -333,6 +358,7 @@ def plot_mean_median(data : pd.DataFrame, path : str, file_name = 'mean_median.p
     path (str): The path to save the generated plot(s).
     file_name (str, optional): The name of the file to save the plot. Defaults to 'mean_median.png'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
+    with_hourglass (bool, optional): If True, plot the hourglass. Defaults to True
     """
     if models == 'all':
         all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
@@ -376,6 +402,19 @@ def plot_mean_median(data : pd.DataFrame, path : str, file_name = 'mean_median.p
         # Horizontal axis
         ax[1].plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
 
+        if with_hourglass:
+            for axis in ax:
+                abs_better, _ = axis.fill(
+                    [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
+                    c='tab:orange', 
+                    alpha=0.2, 
+                    label=f'Model 1 is better')
+                ord_better, _ = axis.fill(
+                    [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
+                    c='tab:green', 
+                    alpha=0.2, 
+                    label=f'Model 2 is better')
+
         ax[1].plot([mean[0], mean[0]], [-extrema, extrema], color='tab:blue', linestyle='--', label='Mean', linewidth=2)
         std_line, = ax[1].plot([mean[0] - std[0], mean[0] - std[0]], [-extrema, extrema], color='tab:blue', linestyle='--', label='Std Deviation', alpha=0.5, linewidth=2)
         ax[1].plot([mean[0] + std[0], mean[0] + std[0]], [-extrema, extrema], color='tab:blue', linestyle='--', label='Std Deviation', alpha=0.5, linewidth=2)
@@ -390,9 +429,15 @@ def plot_mean_median(data : pd.DataFrame, path : str, file_name = 'mean_median.p
         ax[1].scatter(x, y, s=100, c='black')
 
         ax[0].set_ylabel(f'Errors of model 2', fontsize=25)
-        fig.text(0.5, 0.27, f'Errors of {combination[0]}', ha='center', va='center', fontsize=25)
+        fig.text(0.5, 0.23, f'Errors of model 1', ha='center', va='center', fontsize=25)
 
-        fig.legend(handles=[median_line, mean_line, std_line], loc='lower right', bbox_to_anchor=(0.98, 0.1))
+        if with_hourglass:
+            for axis in ax:
+                axis.xaxis.label.set_color('tab:orange')
+                axis.yaxis.label.set_color('tab:green')
+            fig.legend(handles=[abs_better, ord_better, median_line, mean_line, std_line, abs_better, ord_better], loc='lower right', bbox_to_anchor=(0.98, 0.1))
+        else:
+            fig.legend(handles=[median_line, mean_line, std_line], loc='lower right', bbox_to_anchor=(0.98, 0.1))
         fig.tight_layout()
         fig.savefig(join(to_save, file_name))
         plt.close()
@@ -557,11 +602,10 @@ def plot_distributions_alone(data : pd.DataFrame, path : str, file_name = 'distr
         ax.set_xlabel('Errors')
 
         max_bin_height = max(hist[0])
-        max_bin_index = np.where(hist[0] == max_bin_height)[0][0]
-        mode = (hist[1][max_bin_index] + hist[1][max_bin_index + 1]) / 2
-
-        ax.plot([mode, mode], [0, max_bin_height], color='tab:blue', linestyle='--', label=f'Mode')
-        ax.text(mode, max_bin_height, f'{mode:.2f}', ha='center', va='bottom', color='tab:blue', fontsize=15)
+        median = data['error_'+combination[model_index]].median()
+        ax.axvline(0, color='black')
+        ax.plot([median, median], [0, max_bin_height], color='tab:blue', linestyle='--', label=f'Median')
+        ax.text(median, max_bin_height, f'{median:.2f}', ha='center', va='bottom', color='tab:blue', fontsize=15)
 
         ax.legend()
         fig.tight_layout()
@@ -606,11 +650,9 @@ def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'distri
         ax.set_xlabel('Errors difference')
 
         max_bin_height = max(hist[0])
-        max_bin_index = np.where(hist[0] == max_bin_height)[0][0]
-        mode = (hist[1][max_bin_index] + hist[1][max_bin_index + 1]) / 2
-
-        ax.plot([mode, mode], [0, max_bin_height], color='tab:blue', linestyle='--', label=f'Mode')
-        ax.text(mode, max_bin_height, f'{mode:.2f}', ha='center', va='bottom', color='tab:blue', fontsize=15)
+        median = (data['error_'+combination[0]] - data['error_'+combination[1]]).median()
+        ax.plot([median, median], [0, max_bin_height], color='tab:blue', linestyle='--', label='Median')
+        ax.text(median, max_bin_height, f'{median:.2f}', ha='center', va='bottom', color='tab:blue', fontsize=15)
 
         ax.legend()
         fig.tight_layout()
@@ -653,16 +695,16 @@ def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributio
         ax[1].set_yticks(ticks)
 
         max_bin_height = max(hist1[0])
-        max_bin_index = np.where(hist1[0] == max_bin_height)[0][0]
-        mode1 = (hist1[1][max_bin_index] + hist1[1][max_bin_index + 1]) / 2
-        ax[0].plot([mode1, mode1], [0, max_bin_height], color='tab:blue', linestyle='--')
-        ax[0].text(mode1, max_bin_height, f'{mode1:.2f}', ha='center', va='bottom', color='tab:blue', fontsize=15)
+        median_x = x.median()
+        ax[0].axvline(0, color='black')
+        ax[0].plot([median_x, median_x], [0, max_bin_height], color='tab:blue', linestyle='--')
+        ax[0].text(median_x, max_bin_height, f'{median_x:.2f}', ha='center', va='bottom', color='tab:blue', fontsize=15)
 
         max_bin_height = max(hist2[0])
-        max_bin_index = np.where(hist2[0] == max_bin_height)[0][0]
-        mode2 = (hist2[1][max_bin_index] + hist2[1][max_bin_index + 1]) / 2
-        ax[1].plot([mode2, mode2], [0, max_bin_height], color='tab:blue', linestyle='--', label=f'Mode')
-        ax[1].text(mode2, max_bin_height, f'{mode2:.2f}', ha='center', va='bottom', color='tab:blue', fontsize=15)
+        median_y = y.median()
+        ax[1].axvline(0, color='black')
+        ax[1].plot([median_y, median_y], [0, max_bin_height], color='tab:blue', linestyle='--', label=f'Median')
+        ax[1].text(median_y, max_bin_height, f'{median_y:.2f}', ha='center', va='bottom', color='tab:blue', fontsize=15)
 
         ax[0].set_ylabel('Frequency')
         ax[1].set_xlabel('Errors')
@@ -754,8 +796,8 @@ def plot_with_proximity(
         # draw a cross on the median point (median[0], median[1])
         ax.plot(median[0], median[1], 'x', color='black', markersize=5)
 
-        ax.set_xlabel(f'Errors of {combination[0]}')
-        ax.set_ylabel(f'Errors of {combination[1]}')
+        ax.set_xlabel('Errors of model 1')
+        ax.set_ylabel('Errors of model 2')
         if with_hourglass:
             ax.xaxis.label.set_color('tab:orange')
             ax.yaxis.label.set_color('tab:green')
@@ -767,7 +809,7 @@ def plot_with_proximity(
         plt.close()
 
 def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density_proximity.png',
-                            models : Union[tuple, str] = 'all'):
+                            models : Union[tuple, str] = 'all', with_hourglass : bool = True):
     """ Plot the figure with the density vs proximity of the points.
 
     Parameters:
@@ -775,6 +817,7 @@ def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density
     path (str): The path to save the generated plot(s).
     file_name (str, optional): The name of the file to save. Defaults to 'density_proximity.png'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
+    with_hourglass (bool, optional): If True, plot the hourglass. Defaults to True.
     """
     if models == 'all':
         all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
@@ -800,6 +843,19 @@ def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density
         equal_points, = ax[0].plot([-extrema, extrema], [-extrema, extrema], label="Equal errors")
         ax[0].plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
+        if with_hourglass:
+            for axis in ax:
+                abs_better, _ = axis.fill(
+                    [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
+                    c='tab:orange', 
+                    alpha=0.2, 
+                    label=f'Model 1 is better')
+                ord_better, _ = axis.fill(
+                    [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
+                    c='tab:green', 
+                    alpha=0.2, 
+                    label=f'Model 2 is better')
+
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
 
@@ -809,9 +865,6 @@ def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density
         new_x, new_y, new_z = x[idx], y[idx], z[idx]
         density = ax[0].scatter(new_x, new_y, c=new_z, s=100)
         fig.colorbar(density, label="KDE", fraction=0.030)
-
-        ax[0].set_xlabel(f'Errors of {combination[0]}')
-        ax[0].set_ylabel(f'Errors of {combination[1]}')
 
         # Proximity plot
         ax[1].set_xlim(-extrema, extrema)
@@ -840,11 +893,17 @@ def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density
         fig.colorbar(density, label="Percentile", fraction=0.030)
         ax[1].plot(median[0], median[1], 'x', color='black', markersize=5)
 
-        ax[1].set_xlabel(f'Errors of {combination[0]}')
-        ax[1].set_ylabel(f'Errors of {combination[1]}')
+        fig.text(0.5, 0.3, 'Errors of model 1', ha='center', va='center', fontsize=25, color='tab:orange')
+        ax[0].set_ylabel('Errors of model 2')
 
         fig.tight_layout()
-        fig.legend(handles=[equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.22))
+        if with_hourglass:
+            for axis in ax:
+                axis.xaxis.label.set_color('tab:orange')
+                axis.yaxis.label.set_color('tab:green')
+                fig.legend(handles=[abs_better, ord_better, equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.15))
+        else:
+            fig.legend(handles=[equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.22))
         fig.savefig(join(to_save, file_name))
         plt.close()
 
@@ -927,8 +986,8 @@ def plot_compared_proximity(
         cbar_ax = fig.add_axes([0.15, 0.2, 0.7, 0.02])
         fig.colorbar(density, cax=cbar_ax, orientation='horizontal', label="Percentile")
 
-        fig.text(0.5, 0.27, f'Errors of {combination[0]}', ha='center', va='center', fontsize=25, color='tab:orange')
-        ax[0].set_ylabel(f'Errors of {combination[1]}')
+        fig.text(0.5, 0.27, 'Errors of model 1', ha='center', va='center', fontsize=25, color='tab:orange')
+        ax[0].set_ylabel('Errors of model 2')
         if with_hourglass:
             for axis in ax:
                 axis.xaxis.label.set_color('tab:orange')
