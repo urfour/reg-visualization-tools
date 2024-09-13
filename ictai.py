@@ -193,11 +193,9 @@ def plot_all():
     plot_errors(data=df_cmapss, path=path, models=models_cmapss, file_name='fig8.png')
     plot_hourglass(data=df_cmapss, path=path, models=models_cmapss, file_name='fig9.png')
     plot_mean_median(data=df_cmapss, path=path, models=models_cmapss, file_name='fig10.png', with_hourglass=False)
-    plot_density_proximity(data=df_cmapss, path=path, models=models_cmapss, file_name='fig11.png')
-    plot_distributions(data=df_cmapss, path=path, models=models_cmapss, file_name='fig12.png')
+    plot_distributions(data=df_cmapss, path=path, models=models_cmapss, file_name='fig11.png')
+    plot_density_proximity(data=df_cmapss, path=path, models=models_cmapss, file_name='fig12.png')
     plot_errors_vs_density(data=df_apartments, path=path, models=other_models, file_name='fig13.png')
-    # plot_errors(data=df_apartments, path=path, models=other_models, file_name='fig13.png')
-    # plot_with_proximity(data=df_apartments, path=path, models=other_models, file_name='fig14.png', with_hourglass=False)
     plot_compared_proximity(data=df_cmapss, path=path, models=models_cmapss, file_name='fig14.png')
 
 if __name__ == '__main__':

@@ -47,20 +47,83 @@ def plot_predicted_real(data : pd.DataFrame, target_name : str, path : str,
         y = data[f'{target_name}_{combination[0]}']
         ax.scatter(x, y, c='black', s=50)
 
-        ax.set_xlabel('Real value')
-        ax.set_ylabel('Predicted value')
+        ax.set_xlabel('Real values')
+        ax.set_ylabel('Predicted values')
 
         # Diagonals
         ax.plot([0, extrema], [0, extrema], color='tab:blue', linewidth=2)
 
         fig.tight_layout()
         fig.legend(handles=[equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.12))
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
+        plt.close()
+
+def plot_predicted_real_proximity(data : pd.DataFrame, target_name : str, path : str, 
+                        file_name = 'actual_predicted_proximity.png', models : Union[tuple, str] = 'all',
+                        colormap = 'Spectral'):
+    """ 
+    Plot actual values vs predicted values of the models with proximity coloration.
+
+    Parameters:
+    data (pd.DataFrame): The input data containing the actual and predicted values.
+    target_name (str): The name of the target variable.
+    path (str): The path to save the generated plot(s).
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'actual_predicted.png'.
+    models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
+    """
+    if models == 'all':
+        all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
+        all_metrics_combination = list(itertools.combinations(all_metrics, 2))
+    else:
+        all_metrics_combination = [models]
+        to_save = path
+    for combination in all_metrics_combination:
+        if models == 'all':
+            to_save = join(path, combination[0]+'_'+combination[1])
+        makedirs(to_save, exist_ok=True)
+        extrema = data[f'{target_name}_{combination[0]}'].max()
+        fig, ax = plt.subplots(1, 1, figsize=(12, 12))
+        ax.set_xlim(0, extrema)
+        ax.set_ylim(0, extrema)
+        ax.set_aspect('equal', adjustable='box')
+
+        # Diagonals
+        equal_points, = ax.plot([0, extrema], [0, extrema], color='tab:blue', linewidth=2, label='Equal errors')
+
+        x = data[target_name]
+        y = data[f'{target_name}_{combination[0]}']
+
+        # Calculate distance to the diagonal axis
+        cov = np.cov(data[[target_name, f'{target_name}_{combination[0]}']], rowvar=False)
+        # calculate coordinates for each point
+        distance = []
+        for i, row in enumerate(data[[target_name, f'{target_name}_{combination[0]}']].values):
+            # mahalanobis distance
+            # distance.append(mahalanobis(row, (x[i], x[i]), np.linalg.inv(cov)))
+            # euclidean distance
+            distance.append(np.sqrt((row[0] - x[i])**2 + (row[1] - x[i])**2))
+        data['distance'] = distance
+
+        data = data.sort_values(by='distance')
+        # Get for each point, the percentage of points that are at least that distance
+        data['percentile'] = data['distance'].apply(lambda x: (len(data[data['distance'] <= x]) / len(data)) * 100)
+        data = data.sort_index()
+
+        density = ax.scatter(x, y, c=data['percentile'], s=100, cmap=colormap)
+        fig.colorbar(density, label="Percentile", fraction=0.030)
+
+        ax.set_xlabel('Real values')
+        ax.set_ylabel('Predicted values')
+
+        fig.tight_layout()
+        fig.legend(handles=[equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.12))
+        fig.savefig(join(to_save, file_name), transparent=True)
         plt.close()
 
 def plot_predicted_real_multiple(data : pd.DataFrame, target_name : str, path : str, 
                                  file_name = 'actual_predicted_two.png', models : Union[tuple, str] = 'all'):
     """ Plot actual values vs predicted values for two models.
+    
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     target_name (str): The name of the target variable.
@@ -90,15 +153,15 @@ def plot_predicted_real_multiple(data : pd.DataFrame, target_name : str, path : 
         ax.scatter(x, y, c='tab:orange', s=50, label=f'Model 1')
         ax.scatter(x, y2, c='tab:green', s=50, label=f'Model 2')
 
-        ax.set_xlabel('Predicted values')
-        ax.set_ylabel('Real values')
+        ax.set_xlabel('Real values')
+        ax.set_ylabel('Predicted values')
 
         # Diagonals
         ax.plot([0, extrema], [0, extrema], color='tab:blue', linewidth=2)
 
         fig.tight_layout()
         fig.legend(loc='lower right', bbox_to_anchor=(0.97, 0.12))
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
         plt.close()
 
 def plot_errors(data : pd.DataFrame, path : str, file_name = 'errors.png',
@@ -124,7 +187,7 @@ def plot_errors(data : pd.DataFrame, path : str, file_name = 'errors.png',
             to_save = join(path, combination[0]+'_'+combination[1])
         makedirs(to_save, exist_ok=True)
         extrema = max(abs(data[['error_'+model for model in combination]].min().min()), abs(data[['error_'+model for model in combination]].max().max()))
-        fig, ax = plt.subplots(1, 1, figsize=(16, 16))
+        fig, ax = plt.subplots(1, 1, figsize=(12, 12))
         ax.set_xlim(-extrema, extrema)
         ax.set_ylim(-extrema, extrema)
         ax.set_aspect('equal', adjustable='box')
@@ -154,7 +217,7 @@ def plot_errors(data : pd.DataFrame, path : str, file_name = 'errors.png',
         
         fig.tight_layout()
         fig.legend(handles=[equal_points], loc='lower right')
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
         plt.close()    
 
 def plot_density(data : pd.DataFrame, path : str, file_name = 'density.png', models : Union[tuple, str] = 'all'):
@@ -177,7 +240,7 @@ def plot_density(data : pd.DataFrame, path : str, file_name = 'density.png', mod
             to_save = join(path, combination[0]+'_'+combination[1])
         makedirs(to_save, exist_ok=True)
         extrema = max(abs(data[['error_'+model for model in combination]].min().min()), abs(data[['error_'+model for model in combination]].max().max()))
-        fig, ax = plt.subplots(1, 1, figsize=(15, 15))
+        fig, ax = plt.subplots(1, 1, figsize=(12, 12))
         ax.set_xlim(-extrema, extrema)
         ax.set_ylim(-extrema, extrema)
         ax.set_aspect('equal', adjustable='box')
@@ -205,7 +268,7 @@ def plot_density(data : pd.DataFrame, path : str, file_name = 'density.png', mod
 
         fig.legend(handles=[equal_points], loc='lower right')
         fig.tight_layout()
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
         plt.close()
 
 def plot_errors_vs_density(data : pd.DataFrame, path : str, 
@@ -288,11 +351,11 @@ def plot_errors_vs_density(data : pd.DataFrame, path : str,
             for axis in ax:
                 axis.yaxis.label.set_color('tab:green')
             fig.text(0.5, 0.27, f'Errors of model 1', ha='center', va='center', fontsize=25, color='tab:orange')
-            fig.legend(handles=[abs_better, ord_better, equal_points], loc='upper right', bbox_to_anchor=(0.91, 0.8))
+            # fig.legend(handles=[abs_better, ord_better, equal_points], loc='upper right', bbox_to_anchor=(0.91, 0.8))
         else:
             fig.text(0.5, 0.27, f'Errors of model 1', ha='center', va='center', fontsize=25)
             fig.legend(handles=[equal_points], loc='upper right', bbox_to_anchor=(0.91, 0.73))
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
         plt.close()
 
 def plot_mean(data : pd.DataFrame, path : str, file_name = 'mean.png', models : Union[tuple, str] = 'all'):
@@ -315,7 +378,7 @@ def plot_mean(data : pd.DataFrame, path : str, file_name = 'mean.png', models : 
             to_save = join(path, combination[0]+'_'+combination[1])
         makedirs(to_save, exist_ok=True)
         extrema = max(abs(data[['error_'+model for model in combination]].min().min()), abs(data[['error_'+model for model in combination]].max().max()))
-        fig, ax = plt.subplots(1, 1, figsize=(16, 16))
+        fig, ax = plt.subplots(1, 1, figsize=(12, 12))
         ax.set_xlim(-extrema, extrema)
         ax.set_ylim(-extrema, extrema)
         ax.set_aspect('equal', adjustable='box')
@@ -345,7 +408,7 @@ def plot_mean(data : pd.DataFrame, path : str, file_name = 'mean.png', models : 
 
         fig.legend(handles=[mean_line, std_line], loc='lower right', bbox_to_anchor=(0.97, 0.09))
         fig.tight_layout()
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
         plt.close()
 
 def plot_mean_median(data : pd.DataFrame, path : str, 
@@ -371,7 +434,7 @@ def plot_mean_median(data : pd.DataFrame, path : str,
             to_save = join(path, combination[0]+'_'+combination[1])
         makedirs(to_save, exist_ok=True)
         extrema = max(abs(data[['error_'+model for model in combination]].min().min()), abs(data[['error_'+model for model in combination]].max().max()))
-        fig, ax = plt.subplots(1, 2, figsize=(16, 16), sharex=True, sharey=True)
+        fig, ax = plt.subplots(1, 2, figsize=(12, 12), sharex=True, sharey=True)
         ax[0].set_xlim(-extrema, extrema)
         ax[0].set_ylim(-extrema, extrema)
         ax[0].set_aspect('equal', adjustable='box')
@@ -439,7 +502,7 @@ def plot_mean_median(data : pd.DataFrame, path : str,
         else:
             fig.legend(handles=[median_line, mean_line, std_line], loc='lower right', bbox_to_anchor=(0.98, 0.1))
         fig.tight_layout()
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
         plt.close()
 
 def plot_mean_density(data : pd.DataFrame, path : str, file_name = 'mean_density.png', models : Union[tuple, str] = 'all'):
@@ -462,7 +525,7 @@ def plot_mean_density(data : pd.DataFrame, path : str, file_name = 'mean_density
             to_save = join(path, combination[0]+'_'+combination[1])
         makedirs(to_save, exist_ok=True)
         extrema = max(abs(data[['error_'+model for model in combination]].min().min()), abs(data[['error_'+model for model in combination]].max().max()))
-        fig, ax = plt.subplots(1, 1, figsize=(16, 16))
+        fig, ax = plt.subplots(1, 1, figsize=(12, 12))
         ax.set_xlim(-extrema, extrema)
         ax.set_ylim(-extrema, extrema)
         ax.set_aspect('equal', adjustable='box')
@@ -497,7 +560,7 @@ def plot_mean_density(data : pd.DataFrame, path : str, file_name = 'mean_density
 
         fig.legend(handles=[mean_line, std_line], loc='lower right', bbox_to_anchor=(0.84, 0.14))
         # fig.tight_layout()
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
         plt.close()
 
 def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.png', models : Union[tuple, str] = 'all'):
@@ -520,7 +583,7 @@ def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.png',
             to_save = join(path, combination[0]+'_'+combination[1])
         makedirs(to_save, exist_ok=True)
         extrema = max(abs(data[['error_'+model for model in combination]].min().min()), abs(data[['error_'+model for model in combination]].max().max()))
-        fig, ax = plt.subplots(1, 1, figsize=(16, 16))
+        fig, ax = plt.subplots(1, 1, figsize=(12, 12))
         ax.set_xlim(-extrema, extrema)
         ax.set_ylim(-extrema, extrema)
         ax.set_aspect('equal', adjustable='box')
@@ -556,7 +619,7 @@ def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.png',
 
         fig.tight_layout()
         fig.legend(handles=[abs_better, ord_better, equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.09))
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
         plt.close()
 
 def plot_distributions_alone(data : pd.DataFrame, path : str, file_name = 'distribution.png', 
@@ -609,7 +672,7 @@ def plot_distributions_alone(data : pd.DataFrame, path : str, file_name = 'distr
 
         ax.legend()
         fig.tight_layout()
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
 
 def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'distributions_diff.png', 
                             models : Union[tuple, str] = 'all'):
@@ -656,7 +719,7 @@ def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'distri
 
         ax.legend()
         fig.tight_layout()
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
 
 def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributions.png', models : Union[tuple, str] = 'all'):
     """ Plot the figure with the distributions of the errors for the models
@@ -678,7 +741,7 @@ def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributio
             to_save = join(path, combination[0]+'_'+combination[1])
         makedirs(to_save, exist_ok=True)
         extrema = max(abs(data[['error_'+model for model in combination]].min().min()), abs(data[['error_'+model for model in combination]].max().max()))
-        fig, ax = plt.subplots(2, 1, figsize=(16, 14), sharex=True, sharey=True)
+        fig, ax = plt.subplots(2, 1, figsize=(10, 8), sharex=True, sharey=True)
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
 
@@ -712,7 +775,7 @@ def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributio
         fig.legend(loc='upper right')
         fig.subplots_adjust(hspace=0)
         fig.tight_layout()
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
 
 def plot_with_proximity(
         data : pd.DataFrame, path : str, file_name = 'circle_plot.png', 
@@ -743,7 +806,7 @@ def plot_with_proximity(
         extrema = max(
             abs(data[['error_'+model for model in combination]].min().min()), 
             abs(data[['error_'+model for model in combination]].max().max()))
-        fig, ax = plt.subplots(1, 1, figsize=(16, 16))
+        fig, ax = plt.subplots(1, 1, figsize=(12, 12))
         ax.set_xlim(-extrema, extrema)
         ax.set_ylim(-extrema, extrema)
         ax.set_aspect('equal', adjustable='box')
@@ -805,7 +868,7 @@ def plot_with_proximity(
         else:
             fig.legend(handles=[equal_points], loc='lower right')
         fig.subplots_adjust(left=0.15)
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
         plt.close()
 
 def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density_proximity.png',
@@ -904,7 +967,7 @@ def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density
                 fig.legend(handles=[abs_better, ord_better, equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.15))
         else:
             fig.legend(handles=[equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.22))
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
         plt.close()
 
 def plot_compared_proximity(
@@ -996,7 +1059,7 @@ def plot_compared_proximity(
             fig.legend(handles=[abs_better, ord_better, equal_points], loc='upper right', bbox_to_anchor=(0.97, 0.8))
         else:
             fig.legend(handles=[equal_points], loc='upper right', bbox_to_anchor=(0.97, 0.7))
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
         plt.close()
 
 def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.png', 
@@ -1139,5 +1202,9 @@ def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.p
 
         fig.legend(handles=[abs_better, ord_better, equal_points, mean_line, std_line], loc='lower right')
         fig.subplots_adjust(left=0.15)
-        fig.savefig(join(to_save, file_name))
+        fig.savefig(join(to_save, file_name), transparent=True)
         plt.close()
+
+if __name__ == '__main__':
+    df = pd.read_csv('results/errors_cmapss.csv')
+    plot_predicted_real_proximity(df, 'RUL', 'fig/cmapss', models=('se', 'quad_quad_0.01'))
