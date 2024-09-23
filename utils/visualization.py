@@ -55,7 +55,7 @@ def plot_predicted_real(data : pd.DataFrame, target_name : str, path : str,
 
         fig.tight_layout()
         fig.legend(handles=[equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.12))
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
         plt.close()
 
 def plot_predicted_real_proximity(data : pd.DataFrame, target_name : str, path : str, 
@@ -117,7 +117,7 @@ def plot_predicted_real_proximity(data : pd.DataFrame, target_name : str, path :
 
         fig.tight_layout()
         fig.legend(handles=[equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.12))
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
         plt.close()
 
 def plot_predicted_real_multiple(data : pd.DataFrame, target_name : str, path : str, 
@@ -161,7 +161,7 @@ def plot_predicted_real_multiple(data : pd.DataFrame, target_name : str, path : 
 
         fig.tight_layout()
         fig.legend(loc='lower right', bbox_to_anchor=(0.97, 0.12))
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
         plt.close()
 
 def plot_errors(data : pd.DataFrame, path : str, file_name = 'errors.png',
@@ -217,7 +217,7 @@ def plot_errors(data : pd.DataFrame, path : str, file_name = 'errors.png',
         
         fig.tight_layout()
         fig.legend(handles=[equal_points], loc='lower right')
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
         plt.close()    
 
 def plot_density(data : pd.DataFrame, path : str, file_name = 'density.png', models : Union[tuple, str] = 'all'):
@@ -268,7 +268,7 @@ def plot_density(data : pd.DataFrame, path : str, file_name = 'density.png', mod
 
         fig.legend(handles=[equal_points], loc='lower right')
         fig.tight_layout()
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
         plt.close()
 
 def plot_errors_vs_density(data : pd.DataFrame, path : str, 
@@ -355,7 +355,7 @@ def plot_errors_vs_density(data : pd.DataFrame, path : str,
         else:
             fig.text(0.5, 0.27, f'Errors of model 1', ha='center', va='center', fontsize=25)
             fig.legend(handles=[equal_points], loc='upper right', bbox_to_anchor=(0.91, 0.73))
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
         plt.close()
 
 def plot_mean(data : pd.DataFrame, path : str, file_name = 'mean.png', models : Union[tuple, str] = 'all'):
@@ -408,7 +408,7 @@ def plot_mean(data : pd.DataFrame, path : str, file_name = 'mean.png', models : 
 
         fig.legend(handles=[mean_line, std_line], loc='lower right', bbox_to_anchor=(0.97, 0.09))
         fig.tight_layout()
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
         plt.close()
 
 def plot_mean_median(data : pd.DataFrame, path : str, 
@@ -502,7 +502,7 @@ def plot_mean_median(data : pd.DataFrame, path : str,
         else:
             fig.legend(handles=[median_line, mean_line, std_line], loc='lower right', bbox_to_anchor=(0.98, 0.1))
         fig.tight_layout()
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
         plt.close()
 
 def plot_mean_density(data : pd.DataFrame, path : str, file_name = 'mean_density.png', models : Union[tuple, str] = 'all'):
@@ -560,7 +560,7 @@ def plot_mean_density(data : pd.DataFrame, path : str, file_name = 'mean_density
 
         fig.legend(handles=[mean_line, std_line], loc='lower right', bbox_to_anchor=(0.84, 0.14))
         # fig.tight_layout()
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
         plt.close()
 
 def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.png', models : Union[tuple, str] = 'all'):
@@ -619,7 +619,7 @@ def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.png',
 
         fig.tight_layout()
         fig.legend(handles=[abs_better, ord_better, equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.09))
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
         plt.close()
 
 def plot_distributions_alone(data : pd.DataFrame, path : str, file_name = 'distribution.png', 
@@ -672,7 +672,7 @@ def plot_distributions_alone(data : pd.DataFrame, path : str, file_name = 'distr
 
         ax.legend()
         fig.tight_layout()
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
 
 def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'distributions_diff.png', 
                             models : Union[tuple, str] = 'all'):
@@ -719,7 +719,7 @@ def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'distri
 
         ax.legend()
         fig.tight_layout()
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
 
 def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributions.png', models : Union[tuple, str] = 'all'):
     """ Plot the figure with the distributions of the errors for the models
@@ -775,7 +775,7 @@ def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributio
         fig.legend(loc='upper right')
         fig.subplots_adjust(hspace=0)
         fig.tight_layout()
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
 
 def plot_with_proximity(
         data : pd.DataFrame, path : str, file_name = 'circle_plot.png', 
@@ -868,7 +868,7 @@ def plot_with_proximity(
         else:
             fig.legend(handles=[equal_points], loc='lower right')
         fig.subplots_adjust(left=0.15)
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
         plt.close()
 
 def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density_proximity.png',
@@ -964,10 +964,11 @@ def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density
             for axis in ax:
                 axis.xaxis.label.set_color('tab:orange')
                 axis.yaxis.label.set_color('tab:green')
-                fig.legend(handles=[abs_better, ord_better, equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.15))
+                fig.legend(handles=[abs_better, ord_better, equal_points], 
+                           loc='lower left', mode='expand', ncol=3, bbox_to_anchor=(0.05, 0.2, 0.88, 0.1))
         else:
             fig.legend(handles=[equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.22))
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
         plt.close()
 
 def plot_compared_proximity(
@@ -1059,7 +1060,7 @@ def plot_compared_proximity(
             fig.legend(handles=[abs_better, ord_better, equal_points], loc='upper right', bbox_to_anchor=(0.97, 0.8))
         else:
             fig.legend(handles=[equal_points], loc='upper right', bbox_to_anchor=(0.97, 0.7))
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
         plt.close()
 
 def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.png', 
@@ -1202,7 +1203,7 @@ def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.p
 
         fig.legend(handles=[abs_better, ord_better, equal_points, mean_line, std_line], loc='lower right')
         fig.subplots_adjust(left=0.15)
-        fig.savefig(join(to_save, file_name), transparent=True)
+        fig.savefig(join(to_save, file_name))
         plt.close()
 
 if __name__ == '__main__':

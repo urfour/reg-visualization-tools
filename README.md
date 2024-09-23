@@ -10,12 +10,12 @@ pip install -r requirements.txt
 
 ## How to use
 
-### ICTAI
+### SDM
 
-To generate the plots as shown in the ICTAI article, please use the following command:
+To generate the plots as shown in the SDM article, please use the following command:
 
 ```bash
-python ictai.py -ap
+python sdm.py -ap
 ```
 
 ### Visualizations
