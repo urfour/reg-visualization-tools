@@ -674,14 +674,14 @@ def plot_distributions_alone(data : pd.DataFrame, path : str, file_name = 'distr
         fig.tight_layout()
         fig.savefig(join(to_save, file_name))
 
-def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'distributions_diff.png', 
+def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'predictions_diff.png', 
                             models : Union[tuple, str] = 'all'):
-    """ Plot the figure with the distribution of the differences between the errors for the models.
+    """ Plot the figure with the distribution of the differences between the predictions for the models.
 
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'distributions_diff.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'predictions_diff.png'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     """
     if models == 'all':
@@ -694,28 +694,25 @@ def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'distri
         if models == 'all':
             to_save = join(path, combination[0]+'_'+combination[1])
         makedirs(to_save, exist_ok=True)
-        extrema = max(abs(data['error_'+combination[0]] - data['error_'+combination[1]]))
+        extrema = max(abs(data['values_'+combination[0]] - data['values_'+combination[1]]))
         fig, ax = plt.subplots(1, 1, figsize=(10, 8), sharex=True, sharey=True)
 
-        hist = ax.hist(data['error_'+combination[0]] - data['error_'+combination[1]], bins=50, alpha=0.8, edgecolor='black', color='tab:orange')
+        hist = ax.hist(data['values_'+combination[0]] - data['values_'+combination[1]], bins=50, alpha=0.8, edgecolor='black', color='tab:orange')
+        # ax.hist(data['values_'+combination[0]], bins=50, alpha=0.8, edgecolor='black', color='tab:orange', label='Model 1')
+        # ax.hist(data['values_'+combination[1]], bins=50, alpha=0.5, edgecolor='black', color='tab:green', label='Model 2')
         ax.grid(True, linestyle='--', alpha=0.5)
         ticks = ax.get_yticks()
         ticks = [tick for tick in ticks if tick != 0]
         ax.set_yticks(ticks)
 
-        # draw the gaussian kernel density
-        # kde = gaussian_kde(data['error_'+model])
-        # x = np.linspace(-extrema, extrema, 1000)
-        # ax.plot(x, kde(x) * len(data) * (extrema * 2) / 50, color='tab:blue', label='KDE')
-
-        ax.set_xlim(-extrema, extrema)
-        ax.set_ylabel('Frequency')
-        ax.set_xlabel('Errors difference')
-
         max_bin_height = max(hist[0])
         median = (data['error_'+combination[0]] - data['error_'+combination[1]]).median()
         ax.plot([median, median], [0, max_bin_height], color='tab:blue', linestyle='--', label='Median')
         ax.text(median, max_bin_height, f'{median:.2f}', ha='center', va='bottom', color='tab:blue', fontsize=15)
+
+        ax.set_xlim(-extrema, extrema)
+        ax.set_ylabel('Frequency')
+        ax.set_xlabel('Prediction difference')
 
         ax.legend()
         fig.tight_layout()
