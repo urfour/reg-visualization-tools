@@ -10,15 +10,15 @@ pip install -r requirements.txt
 
 ## How to use
 
-### SDM
+### Plots
 
-To generate the plots as shown in the SDM article, please use the following command:
+To generate the plots as shown in the article, please use the following command:
 
 ```bash
-python sdm.py -ap
+python main.py -ap
 ```
 
-### Visualizations
+### Models
 
 The functions defined use a DataFrame containing the predictions and the errors of the models, in the following format:
 

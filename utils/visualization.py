@@ -345,7 +345,7 @@ def plot_errors_vs_density(data : pd.DataFrame, path : str,
         density = ax[1].scatter(x, y, c=data['percentile'], s=100, cmap='Spectral')
         cbar_ax = fig.add_axes([0.15, 0.2, 0.7, 0.02])
         fig.colorbar(density, cax=cbar_ax, orientation='horizontal', label="Percentile")
-        ax[1].plot(median[0], median[1], 'x', color='black', markersize=5)
+        # ax[1].plot(median[0], median[1], 'x', color='black', markersize=5)
 
         if with_hourglass:
             for axis in ax:
@@ -951,7 +951,7 @@ def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density
 
         density = ax[1].scatter(x, y, c=data['percentile'], s=100, cmap='Spectral')
         fig.colorbar(density, label="Percentile", fraction=0.030)
-        ax[1].plot(median[0], median[1], 'x', color='black', markersize=5)
+        # ax[1].plot(median[0], median[1], 'x', color='black', markersize=5)
 
         fig.text(0.5, 0.3, 'Errors of model 1', ha='center', va='center', fontsize=25, color='tab:orange')
         ax[0].set_ylabel('Errors of model 2')
@@ -1053,7 +1053,7 @@ def plot_compared_proximity(
             for axis in ax:
                 axis.xaxis.label.set_color('tab:orange')
                 axis.yaxis.label.set_color('tab:green')
-                axis.plot(median[0], median[1], 'x', color='black', markersize=5)
+                # axis.plot(median[0], median[1], 'x', color='black', markersize=5)
             fig.legend(handles=[abs_better, ord_better, equal_points], loc='upper right', bbox_to_anchor=(0.97, 0.8))
         else:
             fig.legend(handles=[equal_points], loc='upper right', bbox_to_anchor=(0.97, 0.7))
