@@ -197,7 +197,7 @@ def plot_errors(data : pd.DataFrame, path : str, file_name = 'errors.png',
         ax.plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
 
         # Diagonals
-        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], color='tab:blue', linewidth=1, label='Equal errors')
+        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], color='tab:blue', linewidth=1, label='Equal absolute errors')
         ax.plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
         if show_one_individual:
@@ -216,7 +216,7 @@ def plot_errors(data : pd.DataFrame, path : str, file_name = 'errors.png',
         ax.set_ylabel(f'Errors of model 2')
         
         fig.tight_layout()
-        fig.legend(handles=[equal_points], loc='lower right')
+        fig.legend(handles=[equal_points], loc='lower right', fontsize=18)
         fig.savefig(join(to_save, file_name))
         plt.close()    
 
@@ -249,7 +249,7 @@ def plot_density(data : pd.DataFrame, path : str, file_name = 'density.png', mod
         # Horizontal axis
         ax.plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
         # Diagonal
-        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], linewidth=1, label="Equal errors")
+        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], linewidth=1, label="Equal absolute errors")
         ax.plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
         x = data['error_'+combination[0]]
@@ -331,7 +331,7 @@ def plot_errors_vs_density(data : pd.DataFrame, path : str,
 
         ax[1].plot([0, 0], [-extrema, extrema], color='black', linewidth=1)
         ax[1].plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
-        equal_points, = ax[1].plot([-extrema, extrema], [-extrema, extrema], linewidth=1, label="Equal errors")
+        equal_points, = ax[1].plot([-extrema, extrema], [-extrema, extrema], linewidth=1, label="Equal absolute errors")
         ax[1].plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
         
         median = (data['error_'+combination[0]].median(), data['error_'+combination[1]].median())
@@ -592,7 +592,7 @@ def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.png',
         # Horizontal axis
         ax.plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
         # Diagonal
-        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], label="Equal errors")
+        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], label="Equal absolute errors")
         ax.plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
         # Model in abs is better
@@ -618,7 +618,7 @@ def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.png',
         ax.yaxis.label.set_color('tab:green')
 
         fig.tight_layout()
-        fig.legend(handles=[abs_better, ord_better, equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.09))
+        fig.legend(handles=[abs_better, ord_better, equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.12), fontsize=20)
         fig.savefig(join(to_save, file_name))
         plt.close()
 
@@ -813,7 +813,7 @@ def plot_with_proximity(
         # Horizontal axis
         ax.plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
         # Diagonal
-        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], label="Equal errors")
+        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], label="Equal absolute errors")
         ax.plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
         if with_hourglass:
@@ -900,7 +900,7 @@ def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density
         # Horizontal axis
         ax[0].plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
         # Diagonal
-        equal_points, = ax[0].plot([-extrema, extrema], [-extrema, extrema], label="Equal errors")
+        equal_points, = ax[0].plot([-extrema, extrema], [-extrema, extrema], label="Equal absolute errors")
         ax[0].plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
         if with_hourglass:
@@ -936,7 +936,7 @@ def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density
         # Horizontal axis
         ax[1].plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
         # Diagonal
-        equal_points, = ax[1].plot([-extrema, extrema], [-extrema, extrema], label="Equal errors")
+        equal_points, = ax[1].plot([-extrema, extrema], [-extrema, extrema], label="Equal absolute errors")
         ax[1].plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
         # Calculate distance to the median
@@ -1007,7 +1007,7 @@ def plot_compared_proximity(
             # Horizontal axis
             axis.plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
             # Diagonal
-            equal_points, = axis.plot([-extrema, extrema], [-extrema, extrema], label="Equal errors")
+            equal_points, = axis.plot([-extrema, extrema], [-extrema, extrema], label="Equal absolute errors")
             axis.plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
             if with_hourglass:
@@ -1094,7 +1094,7 @@ def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.p
         # Horizontal axis
         ax.plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
         # Diagonals
-        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], label="Equal errors")
+        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], label="Equal absolute errors")
         ax.plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
         # Model in abs is better

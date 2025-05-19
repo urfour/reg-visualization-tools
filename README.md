@@ -1,6 +1,6 @@
-# reg-visualization-tools
+# reg-visualization
 
-Visualization Tools for Comparative Analysis of Regression Models
+A Visualization for Comparative Analysis of Regression Models
 
 ## Installation
 
@@ -40,3 +40,81 @@ The script train.py can be used to train them:
 ```bash
 python train.py --data <dataset> --target <target>
 ```
+
+## Datasets and architectures
+
+Table **1** describes the datasets used in our experiments, and Table **2** describes the architectures used for training for each dataset. As Datasets C to E are synthetically generated, the process to create them and their implementation are described in the repository below.
+
+Equations (1), (2), and (3) define the custom loss functions used for C-MAPSS models.
+
+---
+
+### Table 1: Description of the datasets used
+
+| **No** | **Dataset**   | **Description**                                      | **Target**   |
+| ------ | ------------- | ---------------------------------------------------- | ------------ |
+| A      | C-MAPSS   | Turbofan degradation                                 | RUL          |
+| B      | Synthetic 1   | Moderate errors vs Extreme errors                    | Dummy Target |
+| C      | Synthetic 2   | Under and over estimations                           | Dummy Target |
+| D      | Synthetic 3   | Similar errors but on different individuals          | Target       |
+| E      | Apartment | Evolution of the price of apartments for rent in USA | Price        |
+
+---
+
+### Table 2: Description of the architectures used
+
+| **No** | **Model**     | **Criteria**       | **Dataset** |
+| ------ | ------------- | ------------------ | ----------- |
+| 1      | LSTM          | Squared Error      | C-MAPSS     |
+| 2      | LSTM          | Absolute Error     | C-MAPSS     |
+| 3      | LSTM          | LIN-SE 3           | C-MAPSS     |
+| 4      | LSTM          | LIN-SE 4           | C-MAPSS     |
+| 5      | LSTM          | LIN-SE 5           | C-MAPSS     |
+| 6      | LSTM          | LIN-SE 6           | C-MAPSS     |
+| 7      | LSTM          | LIN-LIN 0.01 - 1.0 | C-MAPSS     |
+| 8      | LSTM          | LIN-LIN 0.05 - 1.0 | C-MAPSS     |
+| 9      | LSTM          | LIN-LIN 0.2 - 1.0  | C-MAPSS     |
+| 10     | LSTM          | LIN-LIN 0.3 - 1.0  | C-MAPSS     |
+| 11     | LSTM          | QUAD-QUAD 0.01     | C-MAPSS     |
+| 12     | LSTM          | QUAD-QUAD 0.03     | C-MAPSS     |
+| 13     | LSTM          | QUAD-QUAD 0.05     | C-MAPSS     |
+| 14     | LSTM          | QUAD-QUAD 0.07     | C-MAPSS     |
+| 15     | LSTM          | QUAD-QUAD 0.1      | C-MAPSS     |
+| 16     | Decision Tree | Squared Error      | Apartment   |
+| 17     | XGBoost   | Squared Error      | Apartment   |
+
+---
+
+### Custom Loss Functions
+
+Let $\hat{y}_i$ be the predicted value, $y_i$ the actual value, and $r = \hat{y}_i - y_i$.
+
+1. **LIN-SE**:
+
+$$
+\text{LIN-SE}(a) = \frac{1}{N} \sum_{i=1}^N
+\begin{cases}
+-a(\hat{y}_i - y_i), & \text{if } r < 0 \\
+(\hat{y}_i - y_i)^2, & \text{otherwise}
+\end{cases}
+$$
+
+2. **LIN-LIN**:
+
+$$
+\text{LIN-LIN}(a, b) = \frac{1}{N} \sum_{i=1}^N
+\begin{cases}
+-a(\hat{y}_i - y_i), & \text{if } r < 0 \\
+b(\hat{y}_i - y_i), & \text{otherwise}
+\end{cases}
+$$
+
+3. **QUAD-QUAD**:
+
+$$
+\text{QUAD-QUAD}(a) = \frac{1}{N} \sum_{i=1}^N
+\begin{cases}
+2a(\hat{y}_i - y_i)^2, & \text{if } r < 0 \\
+2(-a + 1)(\hat{y}_i - y_i), & \text{otherwise}
+\end{cases}
+$$
