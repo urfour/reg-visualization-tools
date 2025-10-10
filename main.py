@@ -212,42 +212,42 @@ def train_ai4i():
     X_selected = selector.fit_transform(X_scaled, y)
     
     X_train, X_test, y_train, y_test = train_test_split(X_selected, y, test_size=0.2, random_state=42)
-    
-    models = {
-        'RandomForest': RandomForestRegressor(n_estimators=200, max_depth=15, min_samples_split=5, random_state=42),
-        'GradientBoosting': GradientBoostingRegressor(n_estimators=200, learning_rate=0.1, max_depth=8, random_state=42),
-        'XGBoost': XGBRegressor(n_estimators=200, learning_rate=0.1, max_depth=8, random_state=42),
-        'ElasticNet': ElasticNet(alpha=0.1, l1_ratio=0.5, random_state=42)
-    }
-    
+
     results = {}
     print("Training models on AI4I dataset:")
     
-    for name, model in models.items():
-        print(f"📈 {name}...")
+    # models = {
+    #     'RandomForest': RandomForestRegressor(n_estimators=200, max_depth=15, min_samples_split=5, random_state=42),
+    #     'GradientBoosting': GradientBoostingRegressor(n_estimators=200, learning_rate=0.1, max_depth=8, random_state=42),
+    #     'XGBoost': XGBRegressor(n_estimators=200, learning_rate=0.1, max_depth=8, random_state=42),
+    #     'ElasticNet': ElasticNet(alpha=0.1, l1_ratio=0.5, random_state=42)
+    # }
+    
+    # for name, model in models.items():
+    #     print(f"📈 {name}...")
         
-        # Entraînement
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
+    #     # Entraînement
+    #     model.fit(X_train, y_train)
+    #     y_pred = model.predict(X_test)
         
-        # Métriques
-        mae = mean_absolute_error(y_test, y_pred)
-        mse = mean_squared_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
+    #     # Métriques
+    #     mae = mean_absolute_error(y_test, y_pred)
+    #     mse = mean_squared_error(y_test, y_pred)
+    #     r2 = r2_score(y_test, y_pred)
         
-        cv_scores = cross_val_score(model, X_train, y_train, cv=5, scoring='neg_mean_absolute_error')
-        cv_mae = -cv_scores.mean()
+    #     cv_scores = cross_val_score(model, X_train, y_train, cv=5, scoring='neg_mean_absolute_error')
+    #     cv_mae = -cv_scores.mean()
         
-        results[name] = {
-            'mae': mae,
-            'mse': mse,
-            'r2': r2,
-            'cv_mae': cv_mae,
-            'predictions': y_pred
-        }
+    #     results[name] = {
+    #         'mae': mae,
+    #         'mse': mse,
+    #         'r2': r2,
+    #         'cv_mae': cv_mae,
+    #         'predictions': y_pred
+    #     }
         
-        print(f"    MAE: {mae:.3f} (CV: {cv_mae:.3f})")
-        print(f"    R²: {r2:.3f}")
+    #     print(f"    MAE: {mae:.3f} (CV: {cv_mae:.3f})")
+    #     print(f"    R²: {r2:.3f}")
     
     print(f"\n LSTM 1")
     criterion_1 = QuadQuad(0.2)
@@ -263,7 +263,8 @@ def train_ai4i():
         'mae': mae_lstm,
         'mse': mse_lstm,
         'r2': r2_lstm,
-        'cv_mae': mae_lstm
+        'cv_mae': mae_lstm,
+        'predictions': y_pred_lstm
     }
     
     print(f"    MAE: {mae_lstm:.3f}")
@@ -285,7 +286,8 @@ def train_ai4i():
         'mae': mae_lstm,
         'mse': mse_lstm,
         'r2': r2_lstm,
-        'cv_mae': mae_lstm
+        'cv_mae': mae_lstm,
+        'predictions': y_pred_lstm
     }
     
     print(f"    MAE: {mae_lstm:.3f}")
@@ -305,6 +307,7 @@ def train_ai4i():
     results_df.to_csv('results/ai4i2020_results.csv', index=False)
     
     metrics_df = pd.DataFrame(results).T
+    metrics_df = metrics_df.drop(columns=['predictions'])
     metrics_df.to_csv('results/ai4i2020_metrics.csv')
         
     return results
@@ -327,7 +330,7 @@ def plot_all():
     df_cmapss_vanilla = pd.read_csv('results/errors_vanillalstm.csv')
     df_cmapss_metrics = pd.read_csv('results/errors_vanillalstm_metrics.csv', index_col=0)
     df_apartments = pd.read_csv('results/apartments_results.csv')
-    df_ai4i = pd.read_csv('results/improved_rul_predictions.csv')
+    df_ai4i = pd.read_csv('results/ai4i2020_results.csv')
     path = 'all_fig'
     models_cmapss = ('se', 'quad_quad_0.01')
     other_models = ('model1', 'model2')
