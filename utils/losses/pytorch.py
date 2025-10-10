@@ -1,58 +1,214 @@
-""" Compute standard cost-sensitive losses and metrics for models """
+"""Compute standard cost-sensitive losses and metrics for models"""
 import torch
+import torch.nn as nn
+from typing import Callable
 
-def rul_score(y_true : torch.Tensor, y_pred : torch.Tensor) -> torch.Tensor:
-    y_diff = y_pred - y_true
-    return torch.sum(torch.where(y_diff < 0, torch.exp(-y_diff/13)-1, torch.exp(y_diff/10)-1))
 
-def mae(y_true : torch.Tensor, y_pred : torch.Tensor) -> torch.Tensor:
-    return torch.mean(abs(y_true - y_pred))
+class RULScore(nn.Module):
+    """Remaining Useful Life Score loss function"""
+    
+    def __init__(self):
+        super(RULScore, self).__init__()
+    
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+        y_diff = y_pred - y_true
+        return torch.sum(torch.where(y_diff < 0, torch.exp(-y_diff/13) - 1, torch.exp(y_diff/10) - 1))
 
-def mse(y_true : torch.Tensor, y_pred : torch.Tensor) -> torch.Tensor:
-    return torch.nn.MSELoss()(y_pred, y_true)
 
-def rmse(y_true : torch.Tensor, y_pred : torch.Tensor) -> torch.Tensor:
-    return torch.sqrt(torch.nn.MSELoss()(y_pred, y_true))
+class MAE(nn.Module):
+    """Mean Absolute Error loss function"""
+    
+    def __init__(self):
+        super(MAE, self).__init__()
+    
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+        return torch.mean(torch.abs(y_pred - y_true))
+    
+class MSE(nn.Module):
+    """Root Mean Squared Error loss function"""
+    
+    def __init__(self):
+        super(MSE, self).__init__()
+        
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+        return torch.mean((y_pred - y_true)**2)
 
-def rmse_window(y_true : torch.Tensor, y_pred : torch.Tensor, window_size : int):
-    return torch.sqrt(torch.mean((y_true[-window_size] - y_pred[-window_size])**2))
 
-def lin_lin(a : int, b : int) -> torch.Tensor:
-    def lin_lin_loss(y_true : torch.Tensor, y_pred : torch.Tensor):
+class RMSE(nn.Module):
+    """Root Mean Squared Error loss function"""
+    
+    def __init__(self):
+        super(RMSE, self).__init__()
+        
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+        return torch.sqrt(torch.mean((y_pred - y_true)**2))
+
+
+class RMSEWindow(nn.Module):
+    """Root Mean Squared Error for a specific window"""
+    
+    def __init__(self, window_size: int):
+        super(RMSEWindow, self).__init__()
+        self.window_size = window_size
+        
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+        return torch.sqrt(torch.mean((y_pred[-self.window_size:] - y_true[-self.window_size:])**2))
+
+
+class LinLin(nn.Module):
+    """Linear-Linear asymmetric loss function"""
+    
+    def __init__(self, a: float, b: float):
+        super(LinLin, self).__init__()
+        self.a = a
+        self.b = b
+        
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
         error = y_pred - y_true
-        return torch.mean(torch.where(error < 0, -a * error, b * error))
-    return lin_lin_loss
+        return torch.mean(torch.where(error < 0, -self.a * error, self.b * error))
 
-def lin_se(a : int) -> torch.Tensor:
-    def lin_se_loss(y_true : torch.Tensor, y_pred : torch.Tensor):
+
+class LinSE(nn.Module):
+    """Linear-Squared Error asymmetric loss function"""
+    
+    def __init__(self, a: float):
+        super(LinSE, self).__init__()
+        self.a = a
+        
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
         error = y_pred - y_true
-        return torch.mean(torch.where(error < 0, -a * error, torch.square(error)))
-    return lin_se_loss
+        return torch.mean(torch.where(error < 0, -self.a * error, error**2))
 
-def sle_se(y_true : torch.Tensor, y_pred : torch.Tensor):
-    return torch.mean(torch.where(y_pred < y_true, 
-                                  torch.square(torch.log(y_pred+1) - torch.log(y_true+1)), 
-                                  torch.square(y_pred - y_true)
-                                  ))
 
-def quad_quad(a : float) -> torch.Tensor:
-    def quad_quad_loss(y_true : torch.Tensor, y_pred : torch.Tensor):
+class SLESE(nn.Module):
+    """Squared Log Error - Squared Error asymmetric loss function"""
+    
+    def __init__(self):
+        super(SLESE, self).__init__()
+        
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+        # Ensure positive values for log
+        y_pred_safe = torch.clamp(y_pred, min=1e-8)
+        y_true_safe = torch.clamp(y_true, min=1e-8)
+        
+        log_error = (torch.log(y_pred_safe + 1) - torch.log(y_true_safe + 1))**2
+        squared_error = (y_pred - y_true)**2
+        
+        return torch.mean(torch.where(y_pred < y_true, log_error, squared_error))
+
+
+class QuadQuad(nn.Module):
+    """Quadratic-Quadratic asymmetric loss function"""
+    
+    def __init__(self, a: float):
+        super(QuadQuad, self).__init__()
+        self.a = a
+        
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
         error = y_pred - y_true
-        return torch.mean(torch.where(error < 0, 2*a*torch.square(error), 2*(-a+1)*torch.square(error)))
-    return quad_quad_loss
+        return torch.mean(torch.where(error < 0, 
+                                    2 * self.a * error**2, 
+                                    2 * (1 - self.a) * error**2))
 
-def custom_loss_threshold_overestimating(t1 : float, t2 : float) -> torch.Tensor:        
-    def custom_loss(y_true : torch.Tensor, y_pred : torch.Tensor):
-        loss = torch.where((t1 < y_true) & (y_true <= t2), 
-                                       abs(y_true - y_pred), y_true * (y_true - y_pred))
-        loss += torch.where(y_pred > y_true, 
-                           abs(1/y_true * (y_true - y_pred), 0))
-        return loss.mean()
-    return custom_loss
 
-def custom_loss_threshold_no_estimation(t1 : float, t2 : float) -> torch.Tensor:
-    def custom_loss(y_true : torch.Tensor, y_pred : torch.Tensor):
-        return torch.where((t1 < y_true) & (y_true <= t2), 
-                           abs(y_true - y_pred), 0).mean()
-                                
-    return custom_loss
+class ThresholdOverestimating(nn.Module):
+    """Custom threshold-based loss with overestimation penalty"""
+    
+    def __init__(self, t1: float, t2: float):
+        super(ThresholdOverestimating, self).__init__()
+        self.t1 = t1
+        self.t2 = t2
+        
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+        # Base loss within threshold range
+        in_range = (self.t1 < y_true) & (y_true <= self.t2)
+        out_range = ~in_range
+        
+        base_loss = torch.where(in_range, 
+                               torch.abs(y_pred - y_true), 
+                               y_true * torch.abs(y_pred - y_true))
+        
+        # Additional penalty for overestimation
+        overestimation_penalty = torch.where(
+            y_pred > y_true,
+            torch.abs((y_pred - y_true) / torch.clamp(y_true, min=1e-8)),
+            torch.zeros_like(y_pred)
+        )
+        
+        total_loss = base_loss + overestimation_penalty
+        return torch.mean(total_loss)
+
+
+class ThresholdNoEstimation(nn.Module):
+    """Custom threshold-based loss with no estimation outside range"""
+    
+    def __init__(self, t1: float, t2: float):
+        super(ThresholdNoEstimation, self).__init__()
+        self.t1 = t1
+        self.t2 = t2
+        
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+        in_range = (self.t1 < y_true) & (y_true <= self.t2)
+        loss = torch.where(in_range, torch.abs(y_pred - y_true), torch.zeros_like(y_pred))
+        return torch.mean(loss)
+
+
+# Convenience functions for backward compatibility
+def rul_score(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+    """RUL Score function"""
+    return RULScore()(y_pred, y_true)
+
+
+def mae(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+    """Mean Absolute Error function"""
+    return MAE()(y_pred, y_true)
+
+
+def mse(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+    """Mean Squared Error function"""
+    return torch.mean((y_pred - y_true)**2)
+
+
+def rmse(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+    """Root Mean Squared Error function"""
+    return RMSE()(y_pred, y_true)
+
+
+def rmse_window(y_pred: torch.Tensor, y_true: torch.Tensor, window_size: int) -> torch.Tensor:
+    """RMSE for window function"""
+    return RMSEWindow(window_size)(y_pred, y_true)
+
+
+def lin_lin(a: float, b: float) -> Callable[[torch.Tensor, torch.Tensor], torch.Tensor]:
+    """Linear-Linear loss factory function"""
+    loss_fn = LinLin(a, b)
+    return lambda y_pred, y_true: loss_fn(y_pred, y_true)
+
+
+def lin_se(a: float) -> Callable[[torch.Tensor, torch.Tensor], torch.Tensor]:
+    """Linear-SE loss factory function"""
+    loss_fn = LinSE(a)
+    return lambda y_pred, y_true: loss_fn(y_pred, y_true)
+
+
+def sle_se(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+    """SLE-SE loss function"""
+    return SLESE()(y_pred, y_true)
+
+
+def quad_quad(a: float) -> Callable[[torch.Tensor, torch.Tensor], torch.Tensor]:
+    """Quadratic-Quadratic loss factory function"""
+    loss_fn = QuadQuad(a)
+    return lambda y_pred, y_true: loss_fn(y_pred, y_true)
+
+
+def custom_loss_threshold_overestimating(t1: float, t2: float) -> Callable[[torch.Tensor, torch.Tensor], torch.Tensor]:
+    """Threshold overestimating loss factory function"""
+    loss_fn = ThresholdOverestimating(t1, t2)
+    return lambda y_pred, y_true: loss_fn(y_pred, y_true)
+
+
+def custom_loss_threshold_no_estimation(t1: float, t2: float) -> Callable[[torch.Tensor, torch.Tensor], torch.Tensor]:
+    """Threshold no estimation loss factory function"""
+    loss_fn = ThresholdNoEstimation(t1, t2)
+    return lambda y_pred, y_true: loss_fn(y_pred, y_true)

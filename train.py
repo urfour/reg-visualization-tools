@@ -1,10 +1,8 @@
-from typing import Union
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from xgboost import XGBRegressor
 from sklearn.tree import DecisionTreeRegressor
 import pandas as pd
-from math import ceil
 import argparse
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
@@ -74,17 +72,21 @@ def metrics_vanillalstm():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train datasets using XGBoost and DecisionTreeRegressor')
-    parser.add_argument('-d', '--data', type=str, help='Path to the dataset', required=True)
+    parser.add_argument('-d', '--data', type=str, help='Path to the dataset')
     parser.add_argument('--sep', type=str, help='Separator for the dataset', default=',')
-    parser.add_argument('-t', '--target', type=str, help='Target column', required=True)
+    parser.add_argument('-t', '--target', type=str, help='Target column')
     parser.add_argument('--save', type=str, help='Path to save the results', default='results')
     parser.add_argument('--categorical', nargs='+', help='Categorical features to be one-hot encoded')
     parser.add_argument('--drop', nargs='+', help='Columns to be dropped')
+    
     args = parser.parse_args()
-    train_dataset(
-        data=Path(args.data),
-        sep=args.sep,
-        save_dir=Path(args.save),
-        target=args.target,
-        categorical_features=args.categorical,
-        to_drop=args.drop)
+    if args.data and args.target:
+        train_dataset(
+            data=Path(args.data),
+            sep=args.sep,
+            save_dir=Path(args.save),
+            target=args.target,
+            categorical_features=args.categorical,
+            to_drop=args.drop)
+    else:
+        parser.print_help()

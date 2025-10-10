@@ -13,7 +13,7 @@ plt.rcParams['xtick.major.pad'] = '8'
 plt.rcParams['ytick.major.pad'] = '8'
 
 def plot_predicted_real(data : pd.DataFrame, target_name : str, path : str, 
-                        file_name = 'actual_predicted.png', models : Union[tuple, str] = 'all'):
+                        file_name = 'actual_predicted.pdf', models : Union[tuple, str] = 'all'):
     """ 
     Plot actual values vs predicted values of the models.
 
@@ -21,7 +21,7 @@ def plot_predicted_real(data : pd.DataFrame, target_name : str, path : str,
     data (pd.DataFrame): The input data containing the actual and predicted values.
     target_name (str): The name of the target variable.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'actual_predicted.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'actual_predicted.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     """
     if models == 'all':
@@ -41,7 +41,7 @@ def plot_predicted_real(data : pd.DataFrame, target_name : str, path : str,
         ax.set_aspect('equal', adjustable='box')
 
         # Diagonals
-        equal_points, = ax.plot([0, extrema], [0, extrema], color='tab:blue', linewidth=2, label='Equal errors')
+        equal_points, = ax.plot([0, extrema], [0, extrema], color='tab:blue', linewidth=2, label='Perfect predictions')
 
         x = data[target_name]
         y = data[f'{target_name}_{combination[0]}']
@@ -59,7 +59,7 @@ def plot_predicted_real(data : pd.DataFrame, target_name : str, path : str,
         plt.close()
 
 def plot_predicted_real_proximity(data : pd.DataFrame, target_name : str, path : str, 
-                        file_name = 'actual_predicted_proximity.png', models : Union[tuple, str] = 'all',
+                        file_name = 'actual_predicted_proximity.pdf', models : Union[tuple, str] = 'all',
                         colormap = 'Spectral'):
     """ 
     Plot actual values vs predicted values of the models with proximity coloration.
@@ -68,7 +68,7 @@ def plot_predicted_real_proximity(data : pd.DataFrame, target_name : str, path :
     data (pd.DataFrame): The input data containing the actual and predicted values.
     target_name (str): The name of the target variable.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'actual_predicted.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'actual_predicted.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     """
     if models == 'all':
@@ -121,14 +121,15 @@ def plot_predicted_real_proximity(data : pd.DataFrame, target_name : str, path :
         plt.close()
 
 def plot_predicted_real_multiple(data : pd.DataFrame, target_name : str, path : str, 
-                                 file_name = 'actual_predicted_two.png', models : Union[tuple, str] = 'all'):
+                                 file_name = 'actual_predicted_two.pdf', models : Union[tuple, str] = 'all',
+                                 labels : Union[tuple, str] = ('Model 1', 'Model 2')):
     """ Plot actual values vs predicted values for two models.
     
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     target_name (str): The name of the target variable.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'actual_predicted_two.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'actual_predicted_two.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     """
     if models == 'all':
@@ -150,28 +151,28 @@ def plot_predicted_real_multiple(data : pd.DataFrame, target_name : str, path : 
         x = data[target_name]
         y = data[f'{target_name}_{combination[0]}']
         y2 = data[f'{target_name}_{combination[1]}']
-        ax.scatter(x, y, c='tab:orange', s=50, label=f'Model 1')
-        ax.scatter(x, y2, c='tab:green', s=50, label=f'Model 2')
+        ax.scatter(x, y, c='tab:orange', s=50, label=f'Model {labels[0]}')
+        ax.scatter(x, y2, c='tab:green', s=50, label=f'Model {labels[1]}')
 
         ax.set_xlabel('Real values')
         ax.set_ylabel('Predicted values')
 
         # Diagonals
-        ax.plot([0, extrema], [0, extrema], color='tab:blue', linewidth=2)
+        ax.plot([0, extrema], [0, extrema], color='tab:blue', linewidth=2, label="Perfect predictions")
 
         fig.tight_layout()
         fig.legend(loc='lower right', bbox_to_anchor=(0.97, 0.12))
         fig.savefig(join(to_save, file_name))
         plt.close()
 
-def plot_errors(data : pd.DataFrame, path : str, file_name = 'errors.png',
+def plot_errors(data : pd.DataFrame, path : str, file_name = 'errors.pdf',
                 models : Union[tuple, str] = 'all', show_one_individual = False, index = [0]):
     """ Plot only the errors of the models.
     
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'errors.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'errors.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     show_one_individual (bool, optional): If True, show the coordinates of one individual. Defaults to True.
     index (list, optional): The list of the index of individuals to show. Defaults to [0].
@@ -220,13 +221,13 @@ def plot_errors(data : pd.DataFrame, path : str, file_name = 'errors.png',
         fig.savefig(join(to_save, file_name))
         plt.close()    
 
-def plot_density(data : pd.DataFrame, path : str, file_name = 'density.png', models : Union[tuple, str] = 'all'):
+def plot_density(data : pd.DataFrame, path : str, file_name = 'density.pdf', models : Union[tuple, str] = 'all', labels : Union[tuple, str] = ('1', '2')):
     """ Plot the figure only with the points ordered by density for the models.
         
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'density.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'density.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     """
     if models == 'all':
@@ -252,6 +253,17 @@ def plot_density(data : pd.DataFrame, path : str, file_name = 'density.png', mod
         equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], linewidth=1, label="Equal absolute errors")
         ax.plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
+        abs_better, _ = ax.fill(
+            [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
+            c='tab:orange', 
+            alpha=0.2, 
+            label=f'Model {labels[0]} is better')
+        ord_better, _ = ax.fill(
+            [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
+            c='tab:green', 
+            alpha=0.2, 
+            label=f'Model {labels[1]} is better')
+
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
         xy = np.vstack([x, y])
@@ -263,25 +275,28 @@ def plot_density(data : pd.DataFrame, path : str, file_name = 'density.png', mod
         density = ax.scatter(x, y, c=z, s=100)
         fig.colorbar(density, label="KDE", fraction=0.030)
 
-        ax.set_xlabel(f'Errors of model 1')
-        ax.set_ylabel(f'Errors of model 2')
+        ax.xaxis.label.set_color('tab:orange')
+        ax.yaxis.label.set_color('tab:green')
+        ax.set_xlabel(f'Errors of Model {labels[0]}')
+        ax.set_ylabel(f'Errors of Model {labels[1]}')
 
-        fig.legend(handles=[equal_points], loc='lower right')
+        fig.legend(handles=[abs_better, ord_better, equal_points], loc='lower right')
         fig.tight_layout()
         fig.savefig(join(to_save, file_name))
         plt.close()
 
 def plot_errors_vs_density(data : pd.DataFrame, path : str, 
-                           file_name = 'errors_vs_density.png', models : Union[tuple, str] = 'all',
-                           with_hourglass = True):
+                           file_name = 'errors_vs_density.pdf', models : Union[tuple, str] = 'all',
+                           with_hourglass = True, labels : Union[tuple, str] = ('1', '2')):
     """ Plot the figure with the errors and the density of the points for the models.
 
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'errors_vs_density.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'errors_vs_density.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     with_hourglass (bool, optional): If True, plot the hourglass. Defaults to True
+    labels (Union[tuple, str], optional): The labels for the models. Defaults to ('1', '2').
     """
     if models == 'all':
         all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
@@ -316,18 +331,18 @@ def plot_errors_vs_density(data : pd.DataFrame, path : str,
                     [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
                     c='tab:orange', 
                     alpha=0.2, 
-                    label=f'Model 1 is better')
+                    label=f'Model {labels[0]} is better')
                 ord_better, _ = axis.fill(
                     [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
                     c='tab:green', 
                     alpha=0.2, 
-                    label=f'Model 2 is better')
+                    label=f'Model {labels[1]} is better')
 
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
         ax[0].scatter(x, y, c='black', s=100)
 
-        ax[0].set_ylabel(f'Errors of model 2')
+        ax[0].set_ylabel(f'Errors of Model {labels[1]}')
 
         ax[1].plot([0, 0], [-extrema, extrema], color='black', linewidth=1)
         ax[1].plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
@@ -350,21 +365,21 @@ def plot_errors_vs_density(data : pd.DataFrame, path : str,
         if with_hourglass:
             for axis in ax:
                 axis.yaxis.label.set_color('tab:green')
-            fig.text(0.5, 0.27, f'Errors of model 1', ha='center', va='center', fontsize=25, color='tab:orange')
+            fig.text(0.5, 0.27, f'Errors of Model {labels[0]}', ha='center', va='center', fontsize=25, color='tab:orange')
             # fig.legend(handles=[abs_better, ord_better, equal_points], loc='upper right', bbox_to_anchor=(0.91, 0.8))
         else:
-            fig.text(0.5, 0.27, f'Errors of model 1', ha='center', va='center', fontsize=25)
+            fig.text(0.5, 0.27, f'Errors of Model {labels[0]}', ha='center', va='center', fontsize=25)
             fig.legend(handles=[equal_points], loc='upper right', bbox_to_anchor=(0.91, 0.73))
         fig.savefig(join(to_save, file_name))
         plt.close()
 
-def plot_mean(data : pd.DataFrame, path : str, file_name = 'mean.png', models : Union[tuple, str] = 'all'):
+def plot_mean(data : pd.DataFrame, path : str, file_name = 'mean.pdf', models : Union[tuple, str] = 'all'):
     """ Plot the figure with the mean dash lines for the models.
         
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'mean.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'mean.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     """
     if models == 'all':
@@ -412,14 +427,14 @@ def plot_mean(data : pd.DataFrame, path : str, file_name = 'mean.png', models : 
         plt.close()
 
 def plot_mean_median(data : pd.DataFrame, path : str, 
-                     file_name = 'mean_median.png', 
+                     file_name = 'mean_median.pdf', 
                      models : Union[tuple, str] = 'all', with_hourglass = True):
     """ Plot the figure with the mean dash lines for the models and the median.
 
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'mean_median.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'mean_median.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     with_hourglass (bool, optional): If True, plot the hourglass. Defaults to True
     """
@@ -505,13 +520,13 @@ def plot_mean_median(data : pd.DataFrame, path : str,
         fig.savefig(join(to_save, file_name))
         plt.close()
 
-def plot_mean_density(data : pd.DataFrame, path : str, file_name = 'mean_density.png', models : Union[tuple, str] = 'all'):
+def plot_mean_density(data : pd.DataFrame, path : str, file_name = 'mean_density.pdf', models : Union[tuple, str] = 'all'):
     """ Plot the figure with the mean dash lines for the models and the density.
         
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'mean_density.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'mean_density.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     """
     if models == 'all':
@@ -563,13 +578,13 @@ def plot_mean_density(data : pd.DataFrame, path : str, file_name = 'mean_density
         fig.savefig(join(to_save, file_name))
         plt.close()
 
-def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.png', models : Union[tuple, str] = 'all'):
+def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.pdf', models : Union[tuple, str] = 'all', labels : Union[tuple, str] = ('1', '2')):
     """ Plot the figure only with the hourglass for the models
         
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'hourglass.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'hourglass.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     """
     if models == 'all':
@@ -600,21 +615,21 @@ def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.png',
             [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
             c='tab:orange', 
             alpha=0.2, 
-            label=f'Model 1 is better')
+            label=f'Model {labels[0]} is better')
         # Model in ord is better
         ord_better, _ = ax.fill(
             [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
             c='tab:green', 
             alpha=0.2, 
-            label=f'Model 2 is better')
+            label=f'Model {labels[1]} is better')
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
 
         ax.scatter(x, y, s=100, c='black', alpha=0.9)
 
-        ax.set_xlabel(f'Errors of model 1')
+        ax.set_xlabel(f'Errors of Model {labels[0]}')
         ax.xaxis.label.set_color('tab:orange')
-        ax.set_ylabel(f'Errors of model 2')
+        ax.set_ylabel(f'Errors of Model {labels[1]}')
         ax.yaxis.label.set_color('tab:green')
 
         fig.tight_layout()
@@ -622,14 +637,70 @@ def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.png',
         fig.savefig(join(to_save, file_name))
         plt.close()
 
-def plot_distributions_alone(data : pd.DataFrame, path : str, file_name = 'distribution.png', 
+def plot_hexbins(data : pd.DataFrame, path : str, file_name = 'hexbins.pdf', models : Union[tuple, str] = 'all', labels : Union[tuple, str] = ('1', '2')):
+    """ Plot the figure only with the hexbins for the models.
+        
+    Parameters:
+    data (pd.DataFrame): The input data containing the actual and predicted values.
+    path (str): The path to save the generated plot(s).
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'hexbins.pdf'.
+    models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
+    """
+    if models == 'all':
+        all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
+        all_metrics_combination = list(itertools.combinations(all_metrics, 2))
+    else:
+        all_metrics_combination = [models]
+        to_save = path
+    for combination in all_metrics_combination:
+        if models == 'all':
+            to_save = join(path, combination[0]+'_'+combination[1])
+        makedirs(to_save, exist_ok=True)
+        extrema = max(abs(data[['error_'+model for model in combination]].min().min()), abs(data[['error_'+model for model in combination]].max().max()))
+        fig, ax = plt.subplots(1, 1, figsize=(12, 12))
+        ax.set_xlim(-extrema, extrema)
+        ax.set_ylim(-extrema, extrema)
+        ax.set_aspect('equal', adjustable='box')
+        # Vertical axis
+        ax.plot([0, 0], [-extrema, extrema], color='black', linewidth=1)
+        # Horizontal axis
+        ax.plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
+        # Diagonal
+        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], color='tab:blue', linewidth=1, label="Equal absolute errors")
+        ax.plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
+
+        abs_better, _ = ax.fill(
+            [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
+            c='tab:orange', 
+            alpha=0.2, 
+            label=f'Model {labels[0]} is better')
+        ord_better, _ = ax.fill(
+            [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
+            c='tab:green', 
+            alpha=0.2, 
+            label=f'Model {labels[1]} is better')
+
+        x = data['error_'+combination[0]]
+        y = data['error_'+combination[1]]
+        hb = ax.hexbin(x, y, gridsize=50, cmap='Spectral_r', mincnt=1)
+        fig.colorbar(hb, label='Counts', fraction=0.030)
+
+        ax.set_xlabel(f'Errors of Model {labels[0]}')
+        ax.set_ylabel(f'Errors of Model {labels[1]}')
+        ax.xaxis.label.set_color('tab:orange')
+        ax.yaxis.label.set_color('tab:green')
+        fig.legend(handles=[abs_better, ord_better, equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.02), fontsize=18)
+        fig.tight_layout()
+        fig.savefig(join(to_save, file_name))
+
+def plot_distributions_alone(data : pd.DataFrame, path : str, file_name = 'distribution.pdf', 
                              models : Union[tuple, str] = 'all', model_index = 0):
     """ Plot the figure with the distribution of errors for each model alone
 
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'distribution.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'distribution.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     model_index (int, optional): The index of the model to plot (0 or 1). Defaults to 0.
     """
@@ -674,14 +745,14 @@ def plot_distributions_alone(data : pd.DataFrame, path : str, file_name = 'distr
         fig.tight_layout()
         fig.savefig(join(to_save, file_name))
 
-def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'predictions_diff.png', 
+def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'predictions_diff.pdf', 
                             models : Union[tuple, str] = 'all'):
     """ Plot the figure with the distribution of the differences between the predictions for the models.
 
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'predictions_diff.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'predictions_diff.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     """
     if models == 'all':
@@ -718,13 +789,14 @@ def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'predic
         fig.tight_layout()
         fig.savefig(join(to_save, file_name))
 
-def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributions.png', models : Union[tuple, str] = 'all'):
+def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributions.pdf',
+                       models : Union[tuple, str] = 'all', labels : Union[tuple, str] = 'all'):
     """ Plot the figure with the distributions of the errors for the models
         
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'distributions.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'distributions.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     """
     if models == 'all':
@@ -742,13 +814,13 @@ def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributio
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
 
-        hist1 = ax[0].hist(x, bins=50, alpha=0.8, label='Model 1', edgecolor='black', color='tab:orange')
+        hist1 = ax[0].hist(x, bins=50, alpha=0.8, label=f'Model {labels[0]}', edgecolor='black', color='tab:orange')
         ax[0].grid(True, linestyle='--', alpha=0.5)
         ax[0].set_xlim(-extrema, extrema)
         ticks = [tick for tick in ax[0].get_yticks() if tick != 0]
         ax[0].set_yticks(ticks)
 
-        hist2 = ax[1].hist(y, bins=50, alpha=0.5, label='Model 2', edgecolor='black', color='tab:green')
+        hist2 = ax[1].hist(y, bins=50, alpha=0.5, label=f'Model {labels[1]}', edgecolor='black', color='tab:green')
         ax[1].grid(True, linestyle='--', alpha=0.5)
         ax[1].set_xlim(-extrema, extrema)
         ticks = [tick for tick in ax[1].get_yticks() if tick != 0]
@@ -775,19 +847,21 @@ def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributio
         fig.savefig(join(to_save, file_name))
 
 def plot_with_proximity(
-        data : pd.DataFrame, path : str, file_name = 'circle_plot.png', 
+        data : pd.DataFrame, path : str, file_name = 'circle_plot.pdf', 
         models : Union[tuple, str] = 'all', colormap : str = 'Spectral',
-        distance_metric : str = 'mahalanobis', with_hourglass : bool = True):
+        distance_metric : str = 'mahalanobis', with_hourglass : bool = True,
+        labels : Union[tuple, str] = ('1', '2')):
     """ Plot the figure with the proximity of the points.
 
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save. Defaults to 'circle_plot.png'.
+    file_name (str, optional): The name of the file to save. Defaults to 'circle_plot.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     colormap (str, optional): The colormap to use. Defaults to 'Spectral'.
     distance_metric (str, optional): The distance to use. Defaults to 'mahalanobis'.
     with_hourglass (bool, optional): If True, plot the hourglass. Defaults to True.
+    labels (Union[tuple, str], optional): The labels for the models. Defaults to ('1', '2').
     """
     data = data.copy()
     if models == 'all':
@@ -821,12 +895,12 @@ def plot_with_proximity(
                 [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
                 c='tab:orange', 
                 alpha=0.2, 
-                label=f'Model 1 is better')
+                label=f'Model {labels[0]} is better')
             ord_better, _ = ax.fill(
                 [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
                 c='tab:green', 
                 alpha=0.2, 
-                label=f'Model 2 is better')
+                label=f'Model {labels[1]} is better')
 
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
@@ -835,7 +909,7 @@ def plot_with_proximity(
         median = (data['error_'+combination[0]].median(), data['error_'+combination[1]].median())
         if distance_metric == 'euclidean':
             distance = np.sqrt((x - median[0])**2 + (y - median[1])**2)
-        if distance_metric == 'manhattan':
+        elif distance_metric == 'manhattan':
             distance = np.abs(x - median[0]) + np.abs(y - median[1])
         else:
             cov = np.cov(data[['error_'+combination[0], 'error_'+combination[1]]], rowvar=False)
@@ -856,26 +930,26 @@ def plot_with_proximity(
         # draw a cross on the median point (median[0], median[1])
         ax.plot(median[0], median[1], 'x', color='black', markersize=5)
 
-        ax.set_xlabel('Errors of model 1')
-        ax.set_ylabel('Errors of model 2')
+        ax.set_xlabel(f'Errors of Model {labels[0]}')
+        ax.set_ylabel(f'Errors of Model {labels[1]}')
         if with_hourglass:
             ax.xaxis.label.set_color('tab:orange')
             ax.yaxis.label.set_color('tab:green')
             fig.legend(handles=[abs_better, ord_better], loc='lower right')
         else:
             fig.legend(handles=[equal_points], loc='lower right')
-        fig.subplots_adjust(left=0.15)
+        fig.tight_layout()
         fig.savefig(join(to_save, file_name))
         plt.close()
 
-def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density_proximity.png',
+def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density_proximity.pdf',
                             models : Union[tuple, str] = 'all', with_hourglass : bool = True):
     """ Plot the figure with the density vs proximity of the points.
 
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save. Defaults to 'density_proximity.png'.
+    file_name (str, optional): The name of the file to save. Defaults to 'density_proximity.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     with_hourglass (bool, optional): If True, plot the hourglass. Defaults to True.
     """
@@ -969,18 +1043,19 @@ def plot_density_proximity(data : pd.DataFrame, path : str, file_name = 'density
         plt.close()
 
 def plot_compared_proximity(
-        data : pd.DataFrame, path : str, file_name = 'circle_plot.png', 
+        data : pd.DataFrame, path : str, file_name = 'circle_plot.pdf', 
         models : Union[tuple, str] = 'all', colormap : str = 'Spectral',
-        with_hourglass : bool = True):
+        with_hourglass : bool = True, labels : Union[tuple, str] = ('1', '2')):
     """ Plot a comparison of two distance metrics for the models.
 
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save. Defaults to 'circle_plot.png'.
+    file_name (str, optional): The name of the file to save. Defaults to 'circle_plot.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     colormap (str, optional): The colormap to use. Defaults to 'Spectral'.
     with_hourglass (bool, optional): If True, plot the hourglass. Defaults to True.
+    labels (Union[tuple, str], optional): The labels for the models. Defaults to ('1', '2').
     """
     data = data.copy()
     if models == 'all':
@@ -1015,12 +1090,12 @@ def plot_compared_proximity(
                     [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
                     c='tab:orange', 
                     alpha=0.2, 
-                    label=f'Model 1 is better')
+                    label=f'Model {labels[0]} is better')
                 ord_better, _ = axis.fill(
                     [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
                     c='tab:green', 
                     alpha=0.2, 
-                    label=f'Model 2 is better')
+                    label=f'Model {labels[1]} is better')
 
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
@@ -1047,8 +1122,8 @@ def plot_compared_proximity(
         cbar_ax = fig.add_axes([0.15, 0.2, 0.7, 0.02])
         fig.colorbar(density, cax=cbar_ax, orientation='horizontal', label="Percentile")
 
-        fig.text(0.5, 0.27, 'Errors of model 1', ha='center', va='center', fontsize=25, color='tab:orange')
-        ax[0].set_ylabel('Errors of model 2')
+        fig.text(0.5, 0.27, f'Errors of Model {labels[0]}', ha='center', va='center', fontsize=25, color='tab:orange')
+        ax[0].set_ylabel(f'Errors of Model {labels[1]}')
         if with_hourglass:
             for axis in ax:
                 axis.xaxis.label.set_color('tab:orange')
@@ -1060,7 +1135,7 @@ def plot_compared_proximity(
         fig.savefig(join(to_save, file_name))
         plt.close()
 
-def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.png', 
+def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.pdf', 
                     models : Union[tuple, str] = 'all', show_one_individual = False, 
                     distance_metric : str = 'euclidean', colormap : str = 'Spectral'):
     """ Plot everything in one figure for the models.
@@ -1068,7 +1143,7 @@ def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.p
     Parameters:
     data (pd.DataFrame): The input data containing the actual and predicted values.
     path (str): The path to save the generated plot(s).
-    file_name (str, optional): The name of the file to save the plot. Defaults to 'general_plot.png'.
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'general_plot.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     show_one_individual (bool, optional): If True, shows the dash lines for one individual. Defaults to False.
     distance_metric (str, optional): The distance to use. Defaults to 'euclidean'.
@@ -1203,6 +1278,76 @@ def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.p
         fig.savefig(join(to_save, file_name))
         plt.close()
 
-if __name__ == '__main__':
-    df = pd.read_csv('results/errors_cmapss.csv')
-    plot_predicted_real_proximity(df, 'RUL', 'fig/cmapss', models=('se', 'quad_quad_0.01'))
+def plot_predicted_real_grid(data : pd.DataFrame, metrics : pd.DataFrame, target_name : str, path : str, file_name = 'predicted_real_grid.pdf',
+                             ):
+    """ Plot a grid of scatter plots comparing predicted vs real values for different metrics."""
+    all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
+    metrics_to_plot = all_metrics[:12]  # Only take the first 12 metrics for a 3x4 grid
+    metrics_ids = {name: idx+1 for idx, name in enumerate(all_metrics)}
+
+    # order the metrics to show by RMSE by getting the corresponding row
+    metrics_to_plot = sorted(metrics_to_plot, key=lambda x: metrics.loc[x]['rmse'])
+
+    fig, axes = plt.subplots(3, 4, figsize=(32, 24))
+    axes = axes.flatten()
+
+    for idx, metric in enumerate(metrics_to_plot):
+        ax = axes[idx]
+        # Prepare data for plotting
+        x = data[target_name]
+        y = data[f'{target_name}_{metric}']
+        extrema = y.max()
+        # Calculate distance to the diagonal axis
+        cov = np.cov(data[[target_name, f'{target_name}_{metric}']], rowvar=False)
+        distance = []
+        for i, row in enumerate(data[[target_name, f'{target_name}_{metric}']].values):
+            distance.append(np.sqrt((row[0] - x[i])**2 + (row[1] - x[i])**2))
+        data['distance'] = distance
+        df_sorted = data.sort_values(by='distance')
+        df_sorted['percentile'] = df_sorted['distance'].apply(lambda d: (len(df_sorted[df_sorted['distance'] <= d]) / len(df_sorted)) * 100)
+        df_sorted = df_sorted.sort_index()
+        # Plot
+        ax.set_xlim(0, 50)
+        ax.set_ylim(0, 50)
+        ax.set_aspect('equal', adjustable='box')
+        ax.plot([0, 50], [0, 50], color='tab:blue', linewidth=2)
+        density = ax.scatter(x, y, c=df_sorted['percentile'], s=50, cmap='Spectral', label='Percentile')
+        ax.set_title(f'Model {metrics_ids[metric]}')
+        if idx % 4 == 0:
+            ax.set_ylabel('Predicted values')
+        if idx >= 8:
+            ax.set_xlabel('Real values')
+
+    # Remove unused axes if less than 12 metrics
+    for idx in range(len(metrics_to_plot), 12):
+        fig.delaxes(axes[idx])
+
+    fig.tight_layout()
+    cbar = fig.colorbar(density, ax=axes, orientation='horizontal', fraction=0.04, pad=0.06)
+    cbar.set_label("Percentile")
+    fig.savefig(join(path, file_name))
+    plt.close()
+
+def plot_errors_boxplot(data : pd.DataFrame, metrics : pd.DataFrame, path : str,
+                        file_name = 'errors_boxplot.pdf'):
+    """ Plot boxplots of errors for all metrics. """
+
+    all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
+    metrics_to_plot = all_metrics[:12]  # Only take the first 12 metrics for a 3x4 grid
+    metrics_ids = {name: idx+1 for idx, name in enumerate(all_metrics)}
+
+    # order the metrics to show by RMSE by getting the corresponding row
+    metrics_to_plot = sorted(metrics_to_plot, key=lambda x: metrics.loc[x]['rmse'])
+    # Boxplots of errors for all metrics (vertical)
+    plt.figure(figsize=(10, 10))
+    # order the metrics by RMSE
+    errors_data = [data[f'error_{col}'] for col in metrics_to_plot]
+    plt.boxplot(list(reversed(errors_data)), labels=[f'Model {metrics_ids[col]}' for col in list(reversed(metrics_to_plot))], patch_artist=True, vert=False)
+    plt.ylabel('Model', fontsize=14)
+    plt.xlabel('Error', fontsize=14)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.xlim(-100, 250)
+    plt.tight_layout()
+    plt.savefig(join(path, file_name))
+    plt.close()

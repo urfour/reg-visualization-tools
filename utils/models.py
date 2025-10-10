@@ -13,6 +13,7 @@ from torch import manual_seed
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
+from torch.utils.data import DataLoader, TensorDataset
 
 manual_seed(0)
 random.seed(0)
@@ -350,3 +351,82 @@ class CMAPSSTraining():
                 all_y_pred.append((y[j].item(), y_pred[j].item(), (y_pred[j] - y[j]).item()))
         df = pd.DataFrame(all_y_pred, columns=['RUL', 'RUL_'+loss_name, 'error_'+loss_name])
         return df
+    
+class SimpleLSTMRegressor(nn.Module):
+    def __init__(self, input_size, hidden_size=64, num_layers=2, dropout=0.2):
+        super(SimpleLSTMRegressor, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        
+        self.input_norm = nn.BatchNorm1d(input_size)
+        
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, 
+                           batch_first=True, dropout=dropout if num_layers > 1 else 0)
+        
+        self.output_layers = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size // 2),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_size // 2, 1)
+        )
+        
+    def forward(self, x):
+        batch_size = x.size(0)
+        
+        if x.dim() == 3:
+            x_flat = x.view(-1, x.size(-1))
+            x_norm = self.input_norm(x_flat)
+            x = x_norm.view(batch_size, -1, x.size(-1))
+        else:
+            x = self.input_norm(x)
+            x = x.unsqueeze(1)
+        
+        h_0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
+        c_0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
+        out, _ = self.lstm(x, (h_0, c_0))
+        last_out = out[:, -1, :]
+        output = self.output_layers(last_out)
+        
+        return output.squeeze()
+    
+class LSTMTraining():
+    def __init__(self, X_train, y_train, X_test, criterion = nn.MSELoss(), optimizer = optim.Adam, scheduler=None):
+        self.X_train_tensor = torch.FloatTensor(X_train)
+        self.y_train_tensor = torch.FloatTensor(y_train)
+        self.X_test_tensor = torch.FloatTensor(X_test)
+
+        train_dataset = TensorDataset(self.X_train_tensor, self.y_train_tensor)
+        self.train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+        
+        self.model = SimpleLSTMRegressor(input_size=X_train.shape[1], hidden_size=64, num_layers=2)
+        self.criterion = criterion
+        self.optimizer = optimizer(self.model.parameters(), lr=0.001, weight_decay=1e-5)
+        self.scheduler = scheduler
+
+    def train(self, num_epochs=100):
+        self.model.train()
+        for epoch in range(num_epochs):
+            epoch_loss = 0
+            for batch_x, batch_y in self.train_loader:
+                self.optimizer.zero_grad()
+                outputs = self.model(batch_x)
+                loss = self.criterion(outputs, batch_y)
+                loss.backward()
+                self.optimizer.step()
+                epoch_loss += loss.item()
+
+            avg_loss = epoch_loss / len(self.train_loader)
+            if self.scheduler:
+                self.scheduler.step(avg_loss)
+            
+            if epoch > 20 and avg_loss < 1e-6:
+                break
+                
+            if (epoch + 1) % 20 == 0:
+                print(f"    Epoch {epoch+1}: Loss = {avg_loss:.4f}")
+
+    def predict(self):
+        self.model.eval()
+        with torch.no_grad():
+            y_pred = self.model(self.X_test_tensor).numpy()
+            return y_pred

@@ -43,9 +43,9 @@ python train.py --data <dataset> --target <target>
 
 ## Datasets and architectures
 
-Table **1** describes the datasets used in our experiments, and Table **2** describes the architectures used for training for each dataset. As Datasets C to E are synthetically generated, the process to create them and their implementation are described in the repository below.
+Table **1** describes the datasets used in our experiments, and Table **2** describes the architectures used for training for each dataset. As Datasets B to D are synthetically generated, the process to create them and their implementation are described in the repository.
 
-Equations (1), (2), and (3) define the custom loss functions used for C-MAPSS models.
+Equations (1), (2), and (3) define the custom loss functions used for C-MAPSS and AI4I2020 models.
 
 ---
 
@@ -53,35 +53,41 @@ Equations (1), (2), and (3) define the custom loss functions used for C-MAPSS mo
 
 | **No** | **Dataset**   | **Description**                                      | **Target**   |
 | ------ | ------------- | ---------------------------------------------------- | ------------ |
-| A      | C-MAPSS   | Turbofan degradation                                 | RUL          |
+| A      | C-MAPSS       | Turbofan degradation                                 | RUL          |
 | B      | Synthetic 1   | Moderate errors vs Extreme errors                    | Dummy Target |
 | C      | Synthetic 2   | Under and over estimations                           | Dummy Target |
 | D      | Synthetic 3   | Similar errors but on different individuals          | Target       |
-| E      | Apartment | Evolution of the price of apartments for rent in USA | Price        |
+| E      | Apartment     | Evolution of the price of apartments for rent in USA | Price        |
+| F      | AI4I2020      | Evolution of operational state of machinery          | RUL          |
 
 ---
 
 ### Table 2: Description of the architectures used
 
-| **No** | **Model**     | **Criteria**       | **Dataset** |
-| ------ | ------------- | ------------------ | ----------- |
-| 1      | LSTM          | Squared Error      | C-MAPSS     |
-| 2      | LSTM          | Absolute Error     | C-MAPSS     |
-| 3      | LSTM          | LIN-SE 3           | C-MAPSS     |
-| 4      | LSTM          | LIN-SE 4           | C-MAPSS     |
-| 5      | LSTM          | LIN-SE 5           | C-MAPSS     |
-| 6      | LSTM          | LIN-SE 6           | C-MAPSS     |
-| 7      | LSTM          | LIN-LIN 0.01 - 1.0 | C-MAPSS     |
-| 8      | LSTM          | LIN-LIN 0.05 - 1.0 | C-MAPSS     |
-| 9      | LSTM          | LIN-LIN 0.2 - 1.0  | C-MAPSS     |
-| 10     | LSTM          | LIN-LIN 0.3 - 1.0  | C-MAPSS     |
-| 11     | LSTM          | QUAD-QUAD 0.01     | C-MAPSS     |
-| 12     | LSTM          | QUAD-QUAD 0.03     | C-MAPSS     |
-| 13     | LSTM          | QUAD-QUAD 0.05     | C-MAPSS     |
-| 14     | LSTM          | QUAD-QUAD 0.07     | C-MAPSS     |
-| 15     | LSTM          | QUAD-QUAD 0.1      | C-MAPSS     |
-| 16     | Decision Tree | Squared Error      | Apartment   |
-| 17     | XGBoost   | Squared Error      | Apartment   |
+| **No** | **Model**         | **Criteria**        | **Dataset** |
+| ------ | ----------------- | ------------------- | ----------- |
+| 1      | LSTM              | Squared Error       | C-MAPSS     |
+| 2      | LSTM              | Absolute Error      | C-MAPSS     |
+| 3      | LSTM              | LIN-SE 3            | C-MAPSS     |
+| 4      | LSTM              | LIN-SE 4            | C-MAPSS     |
+| 5      | LSTM              | LIN-SE 5            | C-MAPSS     |
+| 6      | LSTM              | LIN-SE 6            | C-MAPSS     |
+| 7      | LSTM              | LIN-LIN 0.01 - 1.0  | C-MAPSS     |
+| 8      | LSTM              | LIN-LIN 0.05 - 1.0  | C-MAPSS     |
+| 9      | LSTM              | LIN-LIN 0.2 - 1.0   | C-MAPSS     |
+| 10     | LSTM              | LIN-LIN 0.3 - 1.0   | C-MAPSS     |
+| 11     | LSTM              | QUAD-QUAD 0.01      | C-MAPSS     |
+| 12     | LSTM              | QUAD-QUAD 0.03      | C-MAPSS     |
+| 13     | Moderate errors   |                     | Synthetic 1 |
+| 14     | Extreme errors    |                     | Synthetic 1 |
+| 15     | Under-estimations |                     | Synthetic 2 |
+| 16     | Over-estimations  |                     | Synthetic 2 |
+| 17     | Similar errors 1  |                     | Synthetic 3 |
+| 18     | Similar errors 2  |                     | Synthetic 3 |
+| 19     | Decision Tree     | Squared Error       | Apartment   |
+| 20     | XGBoost           | Squared Error       | Apartment   |
+| 21     | LSTM              | QUAD-QUAD 0.2       | AI4I2020    |
+| 22     | LSTM              | QUAD QUAD 0.8       | AI4I2020    |
 
 ---
 
