@@ -230,43 +230,9 @@ def train_ai4i():
     X_selected = selector.fit_transform(X_scaled, y)
     
     X_train, X_test, y_train, y_test = train_test_split(X_selected, y, test_size=0.2, random_state=42)
-    
-    models = {
-        'RandomForest': RandomForestRegressor(n_estimators=200, max_depth=15, min_samples_split=5, random_state=42),
-        'GradientBoosting': GradientBoostingRegressor(n_estimators=200, learning_rate=0.1, max_depth=8, random_state=42),
-        'XGBoost': XGBRegressor(n_estimators=200, learning_rate=0.1, max_depth=8, random_state=42),
-        'ElasticNet': ElasticNet(alpha=0.1, l1_ratio=0.5, random_state=42)
-    }
-    
+
     results = {}
     print("Training models on AI4I dataset:")
-    
-    for name, model in models.items():
-        print(f"Training {name}")
-        
-        # Entraînement
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        
-        # Métriques
-        mae = mean_absolute_error(y_test, y_pred)
-        mse = mean_squared_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
-        
-        cv_scores = cross_val_score(model, X_train, y_train, cv=5, scoring='neg_mean_absolute_error')
-        cv_mae = -cv_scores.mean()
-        
-        results[name] = {
-            'mae': mae,
-            'mse': mse,
-            'r2': r2,
-            'cv_mae': cv_mae,
-            'predictions': y_pred
-        }
-        
-        print(f"    MAE: {mae:.3f} (CV: {cv_mae:.3f})")
-        print(f"    R²: {r2:.3f}")
-    
     print(f"\n LSTM 1")
     criterion_1 = QuadQuad(0.2)
     lstm_1 = LSTMTraining(X_train, y_train.values, X_test, criterion=criterion_1)

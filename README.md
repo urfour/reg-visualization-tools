@@ -1,6 +1,6 @@
 # reg-visualization
 
-A Visualization for Comparative Analysis of Regression Models
+A Methodology for Graphical Comparison of Regression Models
 
 ## Installation
 

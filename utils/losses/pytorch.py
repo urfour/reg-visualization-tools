@@ -195,11 +195,11 @@ def sle_se(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
     """SLE-SE loss function"""
     return SLESE()(y_pred, y_true)
 
-
-def quad_quad(a: float) -> Callable[[torch.Tensor, torch.Tensor], torch.Tensor]:
-    """Quadratic-Quadratic loss factory function"""
-    loss_fn = QuadQuad(a)
-    return lambda y_pred, y_true: loss_fn(y_pred, y_true)
+def quad_quad(a : float) -> torch.Tensor:
+    def quad_quad_loss(y_true : torch.Tensor, y_pred : torch.Tensor):
+        error = y_pred - y_true
+        return torch.mean(torch.where(error < 0, 2*a*torch.square(error), 2*(-a+1)*torch.square(error)))
+    return quad_quad_loss
 
 
 def custom_loss_threshold_overestimating(t1: float, t2: float) -> Callable[[torch.Tensor, torch.Tensor], torch.Tensor]:
