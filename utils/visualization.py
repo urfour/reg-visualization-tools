@@ -790,7 +790,8 @@ def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'predic
         fig.savefig(join(to_save, file_name))
 
 def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributions.pdf',
-                       models : Union[tuple, str] = 'all', labels : Union[tuple, str] = 'all'):
+                       models : Union[tuple, str] = 'all', labels : Union[tuple, str] = 'all',
+                       share_axes : bool = True):
     """ Plot the figure with the distributions of the errors for the models
         
     Parameters:
@@ -798,6 +799,7 @@ def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributio
     path (str): The path to save the generated plot(s).
     file_name (str, optional): The name of the file to save the plot. Defaults to 'distributions.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
+    share_axes (bool, optional): If True, share the axes. Defaults to True.
     """
     if models == 'all':
         all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
@@ -809,20 +811,35 @@ def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributio
         if models == 'all':
             to_save = join(path, combination[0]+'_'+combination[1])
         makedirs(to_save, exist_ok=True)
-        extrema = max(abs(data[['error_'+model for model in combination]].min().min()), abs(data[['error_'+model for model in combination]].max().max()))
-        fig, ax = plt.subplots(2, 1, figsize=(10, 8), sharex=True, sharey=True)
+        
+        fig, ax = plt.subplots(2, 1, figsize=(10, 8), sharex=share_axes, sharey=share_axes)
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
 
+        if share_axes:
+            extrema = max(abs(data[['error_'+model for model in combination]].min().min()), abs(data[['error_'+model for model in combination]].max().max()))
+
         hist1 = ax[0].hist(x, bins=50, alpha=0.8, label=f'Model {labels[0]}', edgecolor='black', color='tab:orange')
         ax[0].grid(True, linestyle='--', alpha=0.5)
-        ax[0].set_xlim(-extrema, extrema)
+        
+        if share_axes:
+            ax[0].set_xlim(-extrema, extrema)
+        else:
+            extrema_x = max(abs(x.min()), abs(x.max()))
+            ax[0].set_xlim(-extrema_x, extrema_x)
+            
         ticks = [tick for tick in ax[0].get_yticks() if tick != 0]
         ax[0].set_yticks(ticks)
 
         hist2 = ax[1].hist(y, bins=50, alpha=0.5, label=f'Model {labels[1]}', edgecolor='black', color='tab:green')
         ax[1].grid(True, linestyle='--', alpha=0.5)
-        ax[1].set_xlim(-extrema, extrema)
+        
+        if share_axes:
+            ax[1].set_xlim(-extrema, extrema)
+        else:
+            extrema_y = max(abs(y.min()), abs(y.max()))
+            ax[1].set_xlim(-extrema_y, extrema_y)
+            
         ticks = [tick for tick in ax[1].get_yticks() if tick != 0]
         ax[1].set_yticks(ticks)
 
@@ -842,9 +859,13 @@ def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributio
         ax[1].set_xlabel('Errors')
         ax[1].set_ylabel('Frequency')
         fig.legend(loc='upper right')
-        fig.subplots_adjust(hspace=0)
+        
+        if share_axes:
+            fig.subplots_adjust(hspace=0)
+            
         fig.tight_layout()
         fig.savefig(join(to_save, file_name))
+        plt.close()
 
 def plot_with_proximity(
         data : pd.DataFrame, path : str, file_name = 'circle_plot.pdf', 
@@ -1186,15 +1207,7 @@ def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.p
             label=f'Model 2 is better')
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
-        # xy = np.vstack([x, y])
-        # # Order the points by density
-        # z = gaussian_kde(xy)(xy)
-        # idx = z.argsort()
-        # x, y, z = x[idx], y[idx], z[idx]
-        # density = ax.scatter(x, y, c=z, s=100)
-        # fig.colorbar(density, label="KDE", fraction=0.030)
 
-        # Calculate distance to the median
         median = (data['error_'+combination[0]].median(), data['error_'+combination[1]].median())
         if distance_metric == 'manhattan':
             distance = np.abs(x - median[0]) + np.abs(y - median[1])
@@ -1206,7 +1219,7 @@ def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.p
         data['distance'] = distance
 
         data = data.sort_values(by='distance')
-        # Get for each point, the percentage of points that are at least that distance
+
         data['percentile'] = data['distance'].apply(lambda x: (len(data[data['distance'] <= x]) / len(data)) * 100)
         data = data.sort_index()
 
@@ -1224,7 +1237,6 @@ def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.p
         ax.plot([-extrema, extrema], [mean[1] - 2*std[1], mean[1] - 2*std[1]], color='tab:blue', linestyle='--', alpha=0.5)
         ax.plot([-extrema, extrema], [mean[1] + 2*std[1], mean[1] + 2*std[1]], color='tab:blue', linestyle='--', alpha=0.5)
 
-        # draw a cross on the median point (median[0], median[1])
         ax.plot(median[0], median[1], 'x', color='black', markersize=5)
 
         ax.set_xlabel(f'Errors of model 1')
@@ -1232,18 +1244,15 @@ def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.p
         ax.set_ylabel(f'Errors of model 2')
         ax.yaxis.label.set_color('tab:green')
 
-        # Dash-lines to show one individual
         if show_one_individual:
             point = data[['error_'+model for model in combination]].sort_values(by='error_'+combination[0]).iloc[3].to_numpy()
             ax.plot([-extrema, point[0]], [point[1], point[1]], color='black', linestyle='--')
             ax.plot([point[0], point[0]], [-extrema, point[1]], color='black', linestyle='--')
 
-        # Add histogram
         pos = ax.get_position()
         ax_histx = fig.add_axes([pos.x0+0.025, 0.15, pos.width-0.02, 0.08])
         ax_histy = fig.add_axes([0.15, pos.y0+0.015, 0.08, pos.height-0.025])
 
-        # Remove axis
         ax_histx.spines['top'].set_visible(False)
         ax_histx.spines['right'].set_visible(False)
         ax_histx.spines['left'].set_visible(False)
@@ -1258,7 +1267,6 @@ def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.p
         ax_histy.yaxis.set_visible(False)
         ax_histy.xaxis.set_visible(False)
 
-        # Remove background
         ax_histx.set_facecolor('none')
         ax_histy.set_facecolor('none')
 
@@ -1278,27 +1286,34 @@ def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.p
         fig.savefig(join(to_save, file_name))
         plt.close()
 
-def plot_predicted_real_grid(data : pd.DataFrame, metrics : pd.DataFrame, target_name : str, path : str, file_name = 'predicted_real_grid.pdf',
+def plot_predicted_real_grid(data : pd.DataFrame, target_name : str, path : str, file_name = 'predicted_real_grid.pdf',
                              ):
     """ Plot a grid of scatter plots comparing predicted vs real values for different metrics."""
     all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
-    metrics_to_plot = all_metrics[:12]  # Only take the first 12 metrics for a 3x4 grid
-    metrics_ids = {name: idx+1 for idx, name in enumerate(all_metrics)}
+    metrics_to_plot = all_metrics[:12]
 
-    # order the metrics to show by RMSE by getting the corresponding row
-    metrics_to_plot = sorted(metrics_to_plot, key=lambda x: metrics.loc[x]['rmse'])
+    # recalculate the metrics
+    rmse = {}
+    mae = {}
+    for model in metrics_to_plot:
+        rmse[model] = round(np.sqrt(np.mean(data[f'error_{model}']**2)), 2)
+        mae[model] = round(np.mean(np.abs(data[f'error_{model}'])), 2)
 
-    fig, axes = plt.subplots(3, 4, figsize=(32, 24))
+    metrics_to_plot = sorted(metrics_to_plot, key=lambda x: rmse[x])
+
+    fig, axes = plt.subplots(3, 4, figsize=(28, 24), sharex=True, sharey=True)
     axes = axes.flatten()
+
+    target_metrics = [f'{target_name}_{metric}' for metric in metrics_to_plot]
+
+    min_val = min(0, data[target_metrics].min().min())
+    max_val = max(data[target_name].max(), data[target_metrics].max().max())
 
     for idx, metric in enumerate(metrics_to_plot):
         ax = axes[idx]
-        # Prepare data for plotting
+
         x = data[target_name]
         y = data[f'{target_name}_{metric}']
-        extrema = y.max()
-        # Calculate distance to the diagonal axis
-        cov = np.cov(data[[target_name, f'{target_name}_{metric}']], rowvar=False)
         distance = []
         for i, row in enumerate(data[[target_name, f'{target_name}_{metric}']].values):
             distance.append(np.sqrt((row[0] - x[i])**2 + (row[1] - x[i])**2))
@@ -1306,48 +1321,50 @@ def plot_predicted_real_grid(data : pd.DataFrame, metrics : pd.DataFrame, target
         df_sorted = data.sort_values(by='distance')
         df_sorted['percentile'] = df_sorted['distance'].apply(lambda d: (len(df_sorted[df_sorted['distance'] <= d]) / len(df_sorted)) * 100)
         df_sorted = df_sorted.sort_index()
-        # Plot
-        ax.set_xlim(0, 50)
-        ax.set_ylim(0, 50)
+
+        ax.set_xlim(min_val, max_val)
+        ax.set_ylim(min_val, max_val)
         ax.set_aspect('equal', adjustable='box')
-        ax.plot([0, 50], [0, 50], color='tab:blue', linewidth=2)
+        ax.plot([min_val, max_val], [min_val, max_val], color='tab:blue', linewidth=2)
         density = ax.scatter(x, y, c=df_sorted['percentile'], s=50, cmap='Spectral', label='Percentile')
-        ax.set_title(f'Model {metrics_ids[metric]}')
+        ax.set_title(f'Model {metric}')
         if idx % 4 == 0:
             ax.set_ylabel('Predicted values')
         if idx >= 8:
             ax.set_xlabel('Real values')
 
-    # Remove unused axes if less than 12 metrics
     for idx in range(len(metrics_to_plot), 12):
         fig.delaxes(axes[idx])
 
     fig.tight_layout()
+    fig.subplots_adjust(wspace=0.1, hspace=0.1)
     cbar = fig.colorbar(density, ax=axes, orientation='horizontal', fraction=0.04, pad=0.06)
     cbar.set_label("Percentile")
     fig.savefig(join(path, file_name))
     plt.close()
 
-def plot_errors_boxplot(data : pd.DataFrame, metrics : pd.DataFrame, path : str,
-                        file_name = 'errors_boxplot.pdf'):
+def plot_errors_boxplot(data : pd.DataFrame, path : str, file_name = 'errors_boxplot.pdf'):
     """ Plot boxplots of errors for all metrics. """
 
-    all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
-    metrics_to_plot = all_metrics[:12]  # Only take the first 12 metrics for a 3x4 grid
-    metrics_ids = {name: idx+1 for idx, name in enumerate(all_metrics)}
+    all_models = [col.split('error_')[1] for col in data.columns if 'error_' in col]
+    metrics_to_plot = all_models[:12]  # Only take the first 12 metrics for a 3x4 grid
+    # recalculate the metrics
+    rmse = {}
+    mae = {}
+    for model in metrics_to_plot:
+        rmse[model] = round(np.sqrt(np.mean(data[f'error_{model}']**2)), 2)
+        mae[model] = round(np.mean(np.abs(data[f'error_{model}'])), 2)
 
     # order the metrics to show by RMSE by getting the corresponding row
-    metrics_to_plot = sorted(metrics_to_plot, key=lambda x: metrics.loc[x]['rmse'])
-    # Boxplots of errors for all metrics (vertical)
-    plt.figure(figsize=(10, 10))
-    # order the metrics by RMSE
+    metrics_to_plot = sorted(metrics_to_plot, key=lambda x: rmse[x])
+    plt.figure(figsize=(8, 10))
     errors_data = [data[f'error_{col}'] for col in metrics_to_plot]
-    plt.boxplot(list(reversed(errors_data)), labels=[f'Model {metrics_ids[col]}' for col in list(reversed(metrics_to_plot))], patch_artist=True, vert=False)
+    plt.boxplot(list(reversed(errors_data)), labels=[f'Model {col}' for col in list(reversed(metrics_to_plot))], patch_artist=True, vert=False)
     plt.ylabel('Model', fontsize=14)
     plt.xlabel('Error', fontsize=14)
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
-    plt.xlim(-100, 250)
+    plt.xlim(-100, 100)
     plt.tight_layout()
     plt.savefig(join(path, file_name))
     plt.close()

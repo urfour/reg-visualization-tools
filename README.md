@@ -15,7 +15,7 @@ pip install -r requirements.txt
 To generate the plots as shown in the article, please use the following command:
 
 ```bash
-python main.py -ap
+python main.py -p
 ```
 
 ### Models
@@ -66,28 +66,26 @@ Equations (1), (2), and (3) define the custom loss functions used for C-MAPSS an
 
 | **No** | **Model**         | **Criteria**        | **Dataset** |
 | ------ | ----------------- | ------------------- | ----------- |
-| 1      | LSTM              | Squared Error       | C-MAPSS     |
-| 2      | LSTM              | Absolute Error      | C-MAPSS     |
-| 3      | LSTM              | LIN-SE 3            | C-MAPSS     |
-| 4      | LSTM              | LIN-SE 4            | C-MAPSS     |
-| 5      | LSTM              | LIN-SE 5            | C-MAPSS     |
-| 6      | LSTM              | LIN-SE 6            | C-MAPSS     |
-| 7      | LSTM              | LIN-LIN 0.01 - 1.0  | C-MAPSS     |
-| 8      | LSTM              | LIN-LIN 0.05 - 1.0  | C-MAPSS     |
-| 9      | LSTM              | LIN-LIN 0.2 - 1.0   | C-MAPSS     |
-| 10     | LSTM              | LIN-LIN 0.3 - 1.0   | C-MAPSS     |
-| 11     | LSTM              | QUAD-QUAD 0.01      | C-MAPSS     |
-| 12     | LSTM              | QUAD-QUAD 0.03      | C-MAPSS     |
-| 13     | Moderate errors   |                     | Synthetic 1 |
-| 14     | Extreme errors    |                     | Synthetic 1 |
-| 15     | Under-estimations |                     | Synthetic 2 |
-| 16     | Over-estimations  |                     | Synthetic 2 |
-| 17     | Similar errors 1  |                     | Synthetic 3 |
-| 18     | Similar errors 2  |                     | Synthetic 3 |
-| 19     | Decision Tree     | Squared Error       | Apartment   |
-| 20     | XGBoost           | Squared Error       | Apartment   |
-| 21     | LSTM              | QUAD-QUAD 0.2       | AI4I2020    |
-| 22     | LSTM              | QUAD QUAD 0.8       | AI4I2020    |
+| A1     | LSTM              | Squared Error       | C-MAPSS     |
+| A2     | LSTM              | Absolute Error      | C-MAPSS     |
+| A3     | LSTM              | LIN-SE 3            | C-MAPSS     |
+| A4     | LSTM              | LIN-SE 4            | C-MAPSS     |
+| A5     | LSTM              | LIN-SE 5            | C-MAPSS     |
+| A6     | LSTM              | LIN-SE 6            | C-MAPSS     |
+| A7     | LSTM              | LIN-LIN 0.01 - 1.0  | C-MAPSS     |
+| A8     | LSTM              | LIN-LIN 0.05 - 1.0  | C-MAPSS     |
+| A9     | LSTM              | LIN-LIN 0.2 - 1.0   | C-MAPSS     |
+| A10    | LSTM              | LIN-LIN 0.3 - 1.0   | C-MAPSS     |
+| A11    | LSTM              | QUAD-QUAD 0.01      | C-MAPSS     |
+| A12    | LSTM              | QUAD-QUAD 0.03      | C-MAPSS     |
+| B1     | Moderate errors   |                     | Synthetic 1 |
+| B2     | Extreme errors    |                     | Synthetic 1 |
+| C1     | Under-estimations |                     | Synthetic 2 |
+| C2     | Over-estimations  |                     | Synthetic 2 |
+| D1     | Similar errors 1  |                     | Synthetic 3 |
+| D2     | Similar errors 2  |                     | Synthetic 3 |
+| E1     | LSTM              | QUAD-QUAD 0.2       | AI4I2020    |
+| E2     | LSTM              | QUAD QUAD 0.8       | AI4I2020    |
 
 ---
 

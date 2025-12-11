@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest, f_regression
 from xgboost import XGBRegressor
 from utils.models import CMAPSSTraining, LSTMTraining
-from utils.losses.pytorch import mse, mae, quad_quad, QuadQuad
+from utils.losses.pytorch import mse, mae, lin_se, lin_lin, QuadQuad
 from utils.visualization import *
 import numpy as np
 from argparse import ArgumentParser
@@ -154,9 +154,18 @@ def train_apartments():
 def train_cmapss():
     """ Train models on CMAPSS data and save results and metrics to csv files """
     all_losses = {
-        'se': mse,
-        'ae': mae,
-        'quad_quad_0.01': quad_quad(0.01)
+        'A1': mse,
+        'A2': mae,
+        'A3': lin_se(0.3),
+        'A4': lin_se(0.4),
+        'A5': lin_se(0.5),
+        'A6': lin_se(0.6),
+        'A7': lin_lin(0.01, 1.0),
+        'A8': lin_lin(0.05, 1.0),
+        'A9': lin_lin(0.2, 1.0),
+        'A10': lin_lin(0.3, 1.0),
+        'A11': QuadQuad(0.01),
+        'A12': QuadQuad(0.03)
     }
     df = pd.DataFrame()
     for loss in all_losses:
@@ -166,7 +175,16 @@ def train_cmapss():
                                 criterion=all_losses[loss])
         training.train(save_model=False, verbose=False)
         df = pd.concat([df, training.calc_errors(loss)], axis=1)
-    df.T.drop_duplicates().T.to_csv('results/errors_cmapss.csv')
+    df.T.drop_duplicates().T.to_csv('results/cmapss_errors.csv')
+    
+    all_models = [col.split('error_')[1] for col in df.columns if 'error_' in col]
+    rmse_values = {}
+    mae_values = {}
+    for model in all_models:
+        rmse_values[model] = round(np.sqrt(np.mean(df[f'error_{model}']**2)), 2)
+        mae_values[model] = round(np.mean(np.abs(df[f'error_{model}'])), 2)
+    metrics_df = pd.DataFrame({'rmse': rmse_values, 'mae': mae_values})
+    metrics_df.to_csv('results/cmapss_metrics.csv')
 
 def train_ai4i():
     df = pd.read_csv('data/ai4i2020.csv')
@@ -224,7 +242,7 @@ def train_ai4i():
     print("Training models on AI4I dataset:")
     
     for name, model in models.items():
-        print(f"📈 {name}...")
+        print(f"Training {name}")
         
         # Entraînement
         model.fit(X_train, y_train)
@@ -263,7 +281,8 @@ def train_ai4i():
         'mae': mae_lstm,
         'mse': mse_lstm,
         'r2': r2_lstm,
-        'cv_mae': mae_lstm
+        'cv_mae': mae_lstm,
+        'predictions': y_pred_lstm
     }
     
     print(f"    MAE: {mae_lstm:.3f}")
@@ -285,7 +304,8 @@ def train_ai4i():
         'mae': mae_lstm,
         'mse': mse_lstm,
         'r2': r2_lstm,
-        'cv_mae': mae_lstm
+        'cv_mae': mae_lstm,
+        'predictions': y_pred_lstm
     }
     
     print(f"    MAE: {mae_lstm:.3f}")
@@ -305,12 +325,15 @@ def train_ai4i():
     results_df.to_csv('results/ai4i2020_results.csv', index=False)
     
     metrics_df = pd.DataFrame(results).T
+    # remove predictions
+    metrics_df = metrics_df.drop(columns=['predictions'])
     metrics_df.to_csv('results/ai4i2020_metrics.csv')
         
     return results
 
 def train_all():
     """ Train models on all datasets and save results and metrics to csv files """
+    print("Training all datasets...")
     train_metrics()
     train_under_over()
     train_different_errors()
@@ -323,53 +346,31 @@ def plot_all():
     df_biases = pd.read_csv('results/metrics_biases.csv')
     df_under_over = pd.read_csv('results/under_over.csv')
     df_diff_errors = pd.read_csv('results/different_errors.csv')
-    df_cmapss = pd.read_csv('results/errors_cmapss.csv')
-    df_cmapss_vanilla = pd.read_csv('results/errors_vanillalstm.csv')
-    df_cmapss_metrics = pd.read_csv('results/errors_vanillalstm_metrics.csv', index_col=0)
-    df_apartments = pd.read_csv('results/apartments_results.csv')
-    df_ai4i = pd.read_csv('results/improved_rul_predictions.csv')
+    df_cmapss = pd.read_csv('results/cmapss_errors.csv')
+    # df_apartments = pd.read_csv('results/apartments_results.csv')
+    df_ai4i = pd.read_csv('results/ai4i2020_results.csv')
     path = 'all_fig'
-    models_cmapss = ('se', 'quad_quad_0.01')
+    models_cmapss = ('A1', 'A10')
     other_models = ('model1', 'model2')
 
     # Generated datasets
-    plot_distributions_alone(data=df_biases, path=path, models=other_models, file_name='fig1.pdf', model_index=1)
-    plot_distributions(data=df_under_over, path=path, models=other_models, file_name='fig2.pdf', labels=('15', '16'))
+    plot_distributions(data=df_biases, path=path, models=other_models, file_name='fig1.pdf', labels=('B1', 'B2'), share_axes=False)
+    plot_distributions(data=df_under_over, path=path, models=other_models, file_name='fig2.pdf', labels=('C1', 'C2'))
     plot_diff_distributions(data=df_diff_errors, path=path, models=other_models, file_name='fig3.pdf')
     # Real datasets
     plot_predicted_real(data=df_cmapss, target_name='RUL', path=path, models=models_cmapss, file_name='fig4.pdf')
-    # plot_distributions_alone(data=df_cmapss, path=path, models=models_cmapss, file_name='fig5.pdf')
-    plot_predicted_real_multiple(data=df_cmapss, target_name='RUL', path=path, models=models_cmapss, file_name='fig5.pdf', labels=('1', '11'))
-    plot_errors_boxplot(data=df_cmapss_vanilla, metrics=df_cmapss_metrics, path=path, file_name='fig7.pdf')
-    plot_predicted_real_grid(data=df_cmapss_vanilla, metrics=df_cmapss_metrics, target_name='RUL', path=path, file_name='fig8.pdf')
-    # plot_errors(data=df_cmapss, path=path, models=models_cmapss, show_one_individual=True, index=[47, 800], file_name='fig7.pdf')
-    # plot_errors(data=df_cmapss, path=path, models=models_cmapss, file_name='fig8.pdf')
-    plot_hourglass(data=df_cmapss, path=path, models=models_cmapss, file_name='fig9.pdf', labels=('1', '11'))
-    # plot_mean_median(data=df_cmapss, path=path, models=models_cmapss, file_name='fig10.pdf', with_hourglass=False)
-    # plot_distributions(data=df_cmapss, path=path, models=models_cmapss, file_name='fig11.pdf')
-    plot_density(data=df_cmapss, path=path, models=models_cmapss, file_name='fig10.pdf', labels=('1', '11'))
-    plot_hexbins(data=df_cmapss, path=path, models=models_cmapss, file_name='fig11.pdf', labels=('1', '11'))
-    plot_with_proximity(data=df_cmapss, path=path, models=models_cmapss, file_name='fig12.pdf', distance_metric='euclidean', labels=('1', '11'))
-    plot_with_proximity(data=df_apartments, path=path, models=other_models, file_name='fig13.pdf', distance_metric='euclidean', labels=('19', '20'))
-    plot_with_proximity(data=df_cmapss, path=path, models=models_cmapss, file_name='fig14.pdf', distance_metric='mahalanobis', labels=('1', '11'))
-    plot_with_proximity(data=df_ai4i, path=path, models=('LSTM_1', 'LSTM_2'), file_name='fig15.pdf', labels=('21', '22'))
-
-    # Generated datasets
-    # plot_distributions_alone(data=df_ai4i, path=path, models=other_models, file_name='new_fig1.png', model_index=1)
-    # plot_distributions(data=df_ai4i, path=path, models=other_models, file_name='new_fig2.png')
-    # # Real datasets
-    # plot_predicted_real(data=df_ai4i, target_name='Rotational speed [rpm]', path=path, models=other_models, file_name='new_fig4.png')
-    # plot_distributions_alone(data=df_ai4i, path=path, models=other_models, file_name='new_fig5.png')
-    # plot_predicted_real_multiple(data=df_ai4i, target_name='Rotational speed [rpm]', path=path, models=other_models, file_name='new_fig6.png')
-    # plot_errors(data=df_ai4i, path=path, models=other_models, file_name='new_fig8.png')
-    # plot_hourglass(data=df_ai4i, path=path, models=other_models, file_name='new_fig9.png')
-    # plot_mean_median(data=df_ai4i, path=path, models=other_models, file_name='new_fig10.png', with_hourglass=False)
-    # plot_distributions(data=df_ai4i, path=path, models=other_models, file_name='new_fig11.png')
-    # plot_density_proximity(data=df_ai4i, path=path, models=other_models, file_name='new_fig12.png')
-    # plot_errors_vs_density(data=df_ai4i, path=path, models=other_models, file_name='new_fig13.png')
-    # plot_compared_proximity(data=df_ai4i, path=path, models=other_models, file_name='new_fig14.png')
-    # plot_hexbins(data=df_ai4i, path=path, models=other_models, file_name='new_fig15.png')
-    # plot_with_proximity(data=df_ai4i, path=path, models='all', file_name='new_fig16.png')
+    plot_predicted_real_multiple(data=df_cmapss, target_name='RUL', path=path, models=models_cmapss, file_name='fig5.pdf', labels=('A1', 'A10'))
+    plot_errors_boxplot(data=df_cmapss, path=path, file_name='fig6.pdf')
+    plot_predicted_real_grid(data=df_cmapss, target_name='RUL', path=path, file_name='fig7.pdf')
+    plot_hourglass(data=df_cmapss, path=path, models=models_cmapss, file_name='fig8.pdf', labels=('A1', 'A10'))
+    # plot_mean_median(data=df_cmapss, path=path, models=models_cmapss, file_name='fig8a.pdf', with_hourglass=False)
+    # plot_distributions(data=df_cmapss, path=path, models=models_cmapss, file_name='fig8b.pdf')
+    plot_density(data=df_cmapss, path=path, models=models_cmapss, file_name='fig9.pdf', labels=('A1', 'A10'))
+    plot_hexbins(data=df_cmapss, path=path, models=models_cmapss, file_name='fig10.pdf', labels=('A1', 'A10'))
+    plot_with_proximity(data=df_cmapss, path=path, models=models_cmapss, file_name='fig11.pdf', distance_metric='euclidean', labels=('A1', 'A10'))
+    # plot_with_proximity(data=df_apartments, path=path, models=other_models, file_name='fig13.pdf', distance_metric='euclidean', labels=('E1', 'E2'))
+    plot_with_proximity(data=df_cmapss, path=path, models=models_cmapss, file_name='fig12.pdf', distance_metric='mahalanobis', labels=('A1', 'A10'))
+    plot_with_proximity(data=df_ai4i, path=path, models=('LSTM_1', 'LSTM_2'), file_name='fig13.pdf', labels=('E1', 'E2'))
 
 if __name__ == '__main__':
     parser = ArgumentParser()
