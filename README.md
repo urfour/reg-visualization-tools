@@ -18,6 +18,19 @@ To generate the plots as shown in the article, please use the following command:
 python main.py -p
 ```
 
+To choose the plot language:
+
+```bash
+python main.py -p --lang en
+python main.py -p --lang fr
+python main.py -p --lang both
+```
+
+When using `--lang both`, figures are generated in:
+
+- `all_fig/en`
+- `all_fig/fr`
+
 ### Models
 
 The functions defined use a DataFrame containing the predictions and the errors of the models, in the following format:

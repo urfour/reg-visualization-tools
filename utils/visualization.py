@@ -12,8 +12,59 @@ plt.rcParams.update({'font.size': 25})
 plt.rcParams['xtick.major.pad'] = '8'
 plt.rcParams['ytick.major.pad'] = '8'
 
-def plot_predicted_real(data : pd.DataFrame, target_name : str, path : str, 
-                        file_name = 'actual_predicted.pdf', models : Union[tuple, str] = 'all'):
+_I18N = {
+    'en': {
+        'perfect_predictions': 'Perfect predictions',
+        'real_values': 'Real values',
+        'predicted_values': 'Predicted values',
+        'equal_absolute_errors': 'Equal absolute errors',
+        'model_better': 'Model {label} is better',
+        'errors_model': 'Errors of Model {label}',
+        'frequency': 'Frequency',
+        'errors': 'Errors',
+        'median': 'Median',
+        'prediction_difference': 'Prediction difference',
+        'percentile': 'Percentile',
+        'kde': 'KDE',
+        'counts': 'Counts',
+        'model': 'Model {label}',
+        'model_short': 'Model',
+        'mean': 'Mean',
+        'std_deviation': 'Std Deviation',
+    },
+    'fr': {
+        'perfect_predictions': 'Prédictions parfaites',
+        'real_values': 'Valeurs réelles',
+        'predicted_values': 'Valeurs prédites',
+        'equal_absolute_errors': 'Erreurs absolues égales',
+        'model_better': 'Modèle {label} est meilleur',
+        'errors_model': 'Erreurs du modèle {label}',
+        'frequency': 'Fréquence',
+        'errors': 'Erreurs',
+        'median': 'Mediane',
+        'prediction_difference': 'Différence des predictions',
+        'percentile': 'Percentile',
+        'kde': 'KDE',
+        'counts': 'Comptes',
+        'model': 'Modèle {label}',
+        'model_short': 'Modèle',
+        'mean': 'Moyenne',
+        'std_deviation': 'Ecart-type',
+    }
+}
+
+
+def _normalize_lang(lang: str) -> str:
+    return lang if lang in _I18N else 'en'
+
+
+def _t(key: str, lang: str = 'en', **kwargs) -> str:
+    text = _I18N[_normalize_lang(lang)][key]
+    return text.format(**kwargs)
+
+def plot_predicted_real(data : pd.DataFrame, target_name : str, path : str,
+                        file_name = 'actual_predicted.pdf', models : Union[tuple, str] = 'all',
+                        lang: str = 'en'):
     """ 
     Plot actual values vs predicted values of the models.
 
@@ -41,14 +92,14 @@ def plot_predicted_real(data : pd.DataFrame, target_name : str, path : str,
         ax.set_aspect('equal', adjustable='box')
 
         # Diagonals
-        equal_points, = ax.plot([0, extrema], [0, extrema], color='tab:blue', linewidth=2, label='Perfect predictions')
+        equal_points, = ax.plot([0, extrema], [0, extrema], color='tab:blue', linewidth=2, label=_t('perfect_predictions', lang))
 
         x = data[target_name]
         y = data[f'{target_name}_{combination[0]}']
         ax.scatter(x, y, c='black', s=50)
 
-        ax.set_xlabel('Real values')
-        ax.set_ylabel('Predicted values')
+        ax.set_xlabel(_t('real_values', lang))
+        ax.set_ylabel(_t('predicted_values', lang))
 
         # Diagonals
         ax.plot([0, extrema], [0, extrema], color='tab:blue', linewidth=2)
@@ -120,9 +171,10 @@ def plot_predicted_real_proximity(data : pd.DataFrame, target_name : str, path :
         fig.savefig(join(to_save, file_name))
         plt.close()
 
-def plot_predicted_real_multiple(data : pd.DataFrame, target_name : str, path : str, 
+def plot_predicted_real_multiple(data : pd.DataFrame, target_name : str, path : str,
                                  file_name = 'actual_predicted_two.pdf', models : Union[tuple, str] = 'all',
-                                 labels : Union[tuple, str] = ('Model 1', 'Model 2')):
+                                 labels : Union[tuple, str] = ('Model 1', 'Model 2'),
+                                 lang: str = 'en'):
     """ Plot actual values vs predicted values for two models.
     
     Parameters:
@@ -151,14 +203,14 @@ def plot_predicted_real_multiple(data : pd.DataFrame, target_name : str, path : 
         x = data[target_name]
         y = data[f'{target_name}_{combination[0]}']
         y2 = data[f'{target_name}_{combination[1]}']
-        ax.scatter(x, y, c='tab:orange', s=50, label=f'Model {labels[0]}')
-        ax.scatter(x, y2, c='tab:green', s=50, label=f'Model {labels[1]}')
+        ax.scatter(x, y, c='tab:orange', s=50, label=_t('model', lang, label=labels[0]))
+        ax.scatter(x, y2, c='tab:green', s=50, label=_t('model', lang, label=labels[1]))
 
-        ax.set_xlabel('Real values')
-        ax.set_ylabel('Predicted values')
+        ax.set_xlabel(_t('real_values', lang))
+        ax.set_ylabel(_t('predicted_values', lang))
 
         # Diagonals
-        ax.plot([0, extrema], [0, extrema], color='tab:blue', linewidth=2, label="Perfect predictions")
+        ax.plot([0, extrema], [0, extrema], color='tab:blue', linewidth=2, label=_t('perfect_predictions', lang))
 
         fig.tight_layout()
         fig.legend(loc='lower right', bbox_to_anchor=(0.97, 0.12))
@@ -221,7 +273,7 @@ def plot_errors(data : pd.DataFrame, path : str, file_name = 'errors.pdf',
         fig.savefig(join(to_save, file_name))
         plt.close()    
 
-def plot_density(data : pd.DataFrame, path : str, file_name = 'density.pdf', models : Union[tuple, str] = 'all', labels : Union[tuple, str] = ('1', '2')):
+def plot_density(data : pd.DataFrame, path : str, file_name = 'density.pdf', models : Union[tuple, str] = 'all', labels : Union[tuple, str] = ('1', '2'), lang: str = 'en'):
     """ Plot the figure only with the points ordered by density for the models.
         
     Parameters:
@@ -250,19 +302,19 @@ def plot_density(data : pd.DataFrame, path : str, file_name = 'density.pdf', mod
         # Horizontal axis
         ax.plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
         # Diagonal
-        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], linewidth=1, label="Equal absolute errors")
+        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], linewidth=1, label=_t('equal_absolute_errors', lang))
         ax.plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
         abs_better, _ = ax.fill(
             [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
             c='tab:orange', 
             alpha=0.2, 
-            label=f'Model {labels[0]} is better')
+            label=_t('model_better', lang, label=labels[0]))
         ord_better, _ = ax.fill(
             [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
             c='tab:green', 
             alpha=0.2, 
-            label=f'Model {labels[1]} is better')
+            label=_t('model_better', lang, label=labels[1]))
 
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
@@ -273,12 +325,12 @@ def plot_density(data : pd.DataFrame, path : str, file_name = 'density.pdf', mod
         x, y, z = x[idx], y[idx], z[idx]
         #density2 = ax.scatter(x, y, c=z, s=100, alpha=0.1)
         density = ax.scatter(x, y, c=z, s=100)
-        fig.colorbar(density, label="KDE", fraction=0.030)
+        fig.colorbar(density, label=_t('kde', lang), fraction=0.030)
 
         ax.xaxis.label.set_color('tab:orange')
         ax.yaxis.label.set_color('tab:green')
-        ax.set_xlabel(f'Errors of Model {labels[0]}')
-        ax.set_ylabel(f'Errors of Model {labels[1]}')
+        ax.set_xlabel(_t('errors_model', lang, label=labels[0]))
+        ax.set_ylabel(_t('errors_model', lang, label=labels[1]))
 
         fig.legend(handles=[abs_better, ord_better, equal_points], loc='lower right')
         fig.tight_layout()
@@ -578,7 +630,7 @@ def plot_mean_density(data : pd.DataFrame, path : str, file_name = 'mean_density
         fig.savefig(join(to_save, file_name))
         plt.close()
 
-def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.pdf', models : Union[tuple, str] = 'all', labels : Union[tuple, str] = ('1', '2')):
+def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.pdf', models : Union[tuple, str] = 'all', labels : Union[tuple, str] = ('1', '2'), lang: str = 'en'):
     """ Plot the figure only with the hourglass for the models
         
     Parameters:
@@ -607,7 +659,7 @@ def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.pdf',
         # Horizontal axis
         ax.plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
         # Diagonal
-        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], label="Equal absolute errors")
+        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], label=_t('equal_absolute_errors', lang))
         ax.plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
         # Model in abs is better
@@ -615,21 +667,21 @@ def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.pdf',
             [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
             c='tab:orange', 
             alpha=0.2, 
-            label=f'Model {labels[0]} is better')
+            label=_t('model_better', lang, label=labels[0]))
         # Model in ord is better
         ord_better, _ = ax.fill(
             [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
             c='tab:green', 
             alpha=0.2, 
-            label=f'Model {labels[1]} is better')
+            label=_t('model_better', lang, label=labels[1]))
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
 
         ax.scatter(x, y, s=100, c='black', alpha=0.9)
 
-        ax.set_xlabel(f'Errors of Model {labels[0]}')
+        ax.set_xlabel(_t('errors_model', lang, label=labels[0]))
         ax.xaxis.label.set_color('tab:orange')
-        ax.set_ylabel(f'Errors of Model {labels[1]}')
+        ax.set_ylabel(_t('errors_model', lang, label=labels[1]))
         ax.yaxis.label.set_color('tab:green')
 
         fig.tight_layout()
@@ -637,7 +689,7 @@ def plot_hourglass(data : pd.DataFrame, path : str, file_name = 'hourglass.pdf',
         fig.savefig(join(to_save, file_name))
         plt.close()
 
-def plot_hexbins(data : pd.DataFrame, path : str, file_name = 'hexbins.pdf', models : Union[tuple, str] = 'all', labels : Union[tuple, str] = ('1', '2')):
+def plot_hexbins(data : pd.DataFrame, path : str, file_name = 'hexbins.pdf', models : Union[tuple, str] = 'all', labels : Union[tuple, str] = ('1', '2'), lang: str = 'en'):
     """ Plot the figure only with the hexbins for the models.
         
     Parameters:
@@ -666,30 +718,30 @@ def plot_hexbins(data : pd.DataFrame, path : str, file_name = 'hexbins.pdf', mod
         # Horizontal axis
         ax.plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
         # Diagonal
-        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], color='tab:blue', linewidth=1, label="Equal absolute errors")
+        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], color='tab:blue', linewidth=1, label=_t('equal_absolute_errors', lang))
         ax.plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
         abs_better, _ = ax.fill(
             [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
             c='tab:orange', 
             alpha=0.2, 
-            label=f'Model {labels[0]} is better')
+            label=_t('model_better', lang, label=labels[0]))
         ord_better, _ = ax.fill(
             [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
             c='tab:green', 
             alpha=0.2, 
-            label=f'Model {labels[1]} is better')
+            label=_t('model_better', lang, label=labels[1]))
 
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
         hb = ax.hexbin(x, y, gridsize=50, cmap='Spectral_r', mincnt=1)
-        fig.colorbar(hb, label='Counts', fraction=0.030)
+        fig.colorbar(hb, label=_t('counts', lang), fraction=0.030)
 
-        ax.set_xlabel(f'Errors of Model {labels[0]}')
-        ax.set_ylabel(f'Errors of Model {labels[1]}')
+        ax.set_xlabel(_t('errors_model', lang, label=labels[0]))
+        ax.set_ylabel(_t('errors_model', lang, label=labels[1]))
         ax.xaxis.label.set_color('tab:orange')
         ax.yaxis.label.set_color('tab:green')
-        fig.legend(handles=[abs_better, ord_better, equal_points], loc='lower right', bbox_to_anchor=(0.97, 0.02), fontsize=18)
+        fig.legend(handles=[abs_better, ord_better, equal_points], loc='lower right', bbox_to_anchor=(0.93, 0.02))
         fig.tight_layout()
         fig.savefig(join(to_save, file_name))
 
@@ -745,8 +797,8 @@ def plot_distributions_alone(data : pd.DataFrame, path : str, file_name = 'distr
         fig.tight_layout()
         fig.savefig(join(to_save, file_name))
 
-def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'predictions_diff.pdf', 
-                            models : Union[tuple, str] = 'all'):
+def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'predictions_diff.pdf',
+                            models : Union[tuple, str] = 'all', lang: str = 'en'):
     """ Plot the figure with the distribution of the differences between the predictions for the models.
 
     Parameters:
@@ -778,12 +830,12 @@ def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'predic
 
         max_bin_height = max(hist[0])
         median = (data['error_'+combination[0]] - data['error_'+combination[1]]).median()
-        ax.plot([median, median], [0, max_bin_height], color='tab:blue', linestyle='--', label='Median')
+        ax.plot([median, median], [0, max_bin_height], color='tab:blue', linestyle='--', label=_t('median', lang))
         ax.text(median, max_bin_height, f'{median:.2f}', ha='center', va='bottom', color='tab:blue', fontsize=15)
 
         ax.set_xlim(-extrema, extrema)
-        ax.set_ylabel('Frequency')
-        ax.set_xlabel('Prediction difference')
+        ax.set_ylabel(_t('frequency', lang))
+        ax.set_xlabel(_t('prediction_difference', lang))
 
         ax.legend()
         fig.tight_layout()
@@ -791,7 +843,7 @@ def plot_diff_distributions(data : pd.DataFrame, path : str, file_name = 'predic
 
 def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributions.pdf',
                        models : Union[tuple, str] = 'all', labels : Union[tuple, str] = 'all',
-                       share_axes : bool = True):
+                       share_axes : bool = True, use_log_scale : bool = False, lang: str = 'en'):
     """ Plot the figure with the distributions of the errors for the models
         
     Parameters:
@@ -800,6 +852,7 @@ def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributio
     file_name (str, optional): The name of the file to save the plot. Defaults to 'distributions.pdf'.
     models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
     share_axes (bool, optional): If True, share the axes. Defaults to True.
+    use_log_scale (bool, optional): If True, use log scale for y-axis. Defaults to False.
     """
     if models == 'all':
         all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
@@ -819,8 +872,11 @@ def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributio
         if share_axes:
             extrema = max(abs(data[['error_'+model for model in combination]].min().min()), abs(data[['error_'+model for model in combination]].max().max()))
 
-        hist1 = ax[0].hist(x, bins=50, alpha=0.8, label=f'Model {labels[0]}', edgecolor='black', color='tab:orange')
+        hist1 = ax[0].hist(x, bins=50, alpha=0.8, label=_t('model', lang, label=labels[0]), edgecolor='black', color='tab:orange')
         ax[0].grid(True, linestyle='--', alpha=0.5)
+        
+        if use_log_scale:
+            ax[0].set_yscale('log')
         
         if share_axes:
             ax[0].set_xlim(-extrema, extrema)
@@ -831,8 +887,11 @@ def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributio
         ticks = [tick for tick in ax[0].get_yticks() if tick != 0]
         ax[0].set_yticks(ticks)
 
-        hist2 = ax[1].hist(y, bins=50, alpha=0.5, label=f'Model {labels[1]}', edgecolor='black', color='tab:green')
+        hist2 = ax[1].hist(y, bins=50, alpha=0.5, label=_t('model', lang, label=labels[1]), edgecolor='black', color='tab:green')
         ax[1].grid(True, linestyle='--', alpha=0.5)
+        
+        if use_log_scale:
+            ax[1].set_yscale('log')
         
         if share_axes:
             ax[1].set_xlim(-extrema, extrema)
@@ -852,12 +911,12 @@ def plot_distributions(data : pd.DataFrame, path : str, file_name = 'distributio
         max_bin_height = max(hist2[0])
         median_y = y.median()
         ax[1].axvline(0, color='black')
-        ax[1].plot([median_y, median_y], [0, max_bin_height], color='tab:blue', linestyle='--', label=f'Median')
+        ax[1].plot([median_y, median_y], [0, max_bin_height], color='tab:blue', linestyle='--', label=_t('median', lang))
         ax[1].text(median_y, max_bin_height, f'{median_y:.2f}', ha='center', va='bottom', color='tab:blue', fontsize=15)
 
-        ax[0].set_ylabel('Frequency')
-        ax[1].set_xlabel('Errors')
-        ax[1].set_ylabel('Frequency')
+        ax[0].set_ylabel(_t('frequency', lang))
+        ax[1].set_xlabel(_t('errors', lang))
+        ax[1].set_ylabel(_t('frequency', lang))
         fig.legend(loc='upper right')
         
         if share_axes:
@@ -871,7 +930,7 @@ def plot_with_proximity(
         data : pd.DataFrame, path : str, file_name = 'circle_plot.pdf', 
         models : Union[tuple, str] = 'all', colormap : str = 'Spectral',
         distance_metric : str = 'mahalanobis', with_hourglass : bool = True,
-        labels : Union[tuple, str] = ('1', '2')):
+    labels : Union[tuple, str] = ('1', '2'), lang: str = 'en'):
     """ Plot the figure with the proximity of the points.
 
     Parameters:
@@ -908,7 +967,7 @@ def plot_with_proximity(
         # Horizontal axis
         ax.plot([-extrema, extrema], [0, 0], color='black', linewidth=1)
         # Diagonal
-        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], label="Equal absolute errors")
+        equal_points, = ax.plot([-extrema, extrema], [-extrema, extrema], label=_t('equal_absolute_errors', lang))
         ax.plot([-extrema, extrema], [extrema, -extrema], color='tab:blue', linewidth=1)
 
         if with_hourglass:
@@ -916,12 +975,12 @@ def plot_with_proximity(
                 [-extrema, 0, extrema], [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema],  
                 c='tab:orange', 
                 alpha=0.2, 
-                label=f'Model {labels[0]} is better')
+                label=_t('model_better', lang, label=labels[0]))
             ord_better, _ = ax.fill(
                 [-extrema, 0, -extrema], [-extrema, 0, extrema], [extrema, 0, extrema], [-extrema, 0, extrema], 
                 c='tab:green', 
                 alpha=0.2, 
-                label=f'Model {labels[1]} is better')
+                label=_t('model_better', lang, label=labels[1]))
 
         x = data['error_'+combination[0]]
         y = data['error_'+combination[1]]
@@ -946,17 +1005,17 @@ def plot_with_proximity(
         data = data.sort_index()
 
         density = ax.scatter(x, y, c=data['percentile'], s=100, cmap=colormap)
-        fig.colorbar(density, label="Percentile", fraction=0.030)
+        fig.colorbar(density, label=_t('percentile', lang), fraction=0.030)
 
         # draw a cross on the median point (median[0], median[1])
         ax.plot(median[0], median[1], 'x', color='black', markersize=5)
 
-        ax.set_xlabel(f'Errors of Model {labels[0]}')
-        ax.set_ylabel(f'Errors of Model {labels[1]}')
+        ax.set_xlabel(_t('errors_model', lang, label=labels[0]))
+        ax.set_ylabel(_t('errors_model', lang, label=labels[1]))
         if with_hourglass:
             ax.xaxis.label.set_color('tab:orange')
             ax.yaxis.label.set_color('tab:green')
-            fig.legend(handles=[abs_better, ord_better], loc='lower right')
+            fig.legend(handles=[abs_better, ord_better, equal_points], loc='lower right')
         else:
             fig.legend(handles=[equal_points], loc='lower right')
         fig.tight_layout()
@@ -1287,7 +1346,7 @@ def plot_everything(data : pd.DataFrame, path : str, file_name = 'general_plot.p
         plt.close()
 
 def plot_predicted_real_grid(data : pd.DataFrame, target_name : str, path : str, file_name = 'predicted_real_grid.pdf',
-                             ):
+                             lang: str = 'en'):
     """ Plot a grid of scatter plots comparing predicted vs real values for different metrics."""
     all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
     metrics_to_plot = all_metrics[:12]
@@ -1327,11 +1386,11 @@ def plot_predicted_real_grid(data : pd.DataFrame, target_name : str, path : str,
         ax.set_aspect('equal', adjustable='box')
         ax.plot([min_val, max_val], [min_val, max_val], color='tab:blue', linewidth=2)
         density = ax.scatter(x, y, c=df_sorted['percentile'], s=50, cmap='Spectral', label='Percentile')
-        ax.set_title(f'Model {metric}')
+        ax.set_title(_t('model', lang, label=metric))
         if idx % 4 == 0:
-            ax.set_ylabel('Predicted values')
+            ax.set_ylabel(_t('predicted_values', lang))
         if idx >= 8:
-            ax.set_xlabel('Real values')
+            ax.set_xlabel(_t('real_values', lang))
 
     for idx in range(len(metrics_to_plot), 12):
         fig.delaxes(axes[idx])
@@ -1339,11 +1398,11 @@ def plot_predicted_real_grid(data : pd.DataFrame, target_name : str, path : str,
     fig.tight_layout()
     fig.subplots_adjust(wspace=0.1, hspace=0.1)
     cbar = fig.colorbar(density, ax=axes, orientation='horizontal', fraction=0.04, pad=0.06)
-    cbar.set_label("Percentile")
+    cbar.set_label(_t('percentile', lang))
     fig.savefig(join(path, file_name))
     plt.close()
 
-def plot_errors_boxplot(data : pd.DataFrame, path : str, file_name = 'errors_boxplot.pdf'):
+def plot_errors_boxplot(data : pd.DataFrame, path : str, file_name = 'errors_boxplot.pdf', lang: str = 'en'):
     """ Plot boxplots of errors for all metrics. """
 
     all_models = [col.split('error_')[1] for col in data.columns if 'error_' in col]
@@ -1359,9 +1418,9 @@ def plot_errors_boxplot(data : pd.DataFrame, path : str, file_name = 'errors_box
     metrics_to_plot = sorted(metrics_to_plot, key=lambda x: rmse[x])
     plt.figure(figsize=(8, 10))
     errors_data = [data[f'error_{col}'] for col in metrics_to_plot]
-    plt.boxplot(list(reversed(errors_data)), labels=[f'Model {col}' for col in list(reversed(metrics_to_plot))], patch_artist=True, vert=False)
-    plt.ylabel('Model', fontsize=14)
-    plt.xlabel('Error', fontsize=14)
+    plt.boxplot(list(reversed(errors_data)), labels=[_t('model', lang, label=col) for col in list(reversed(metrics_to_plot))], patch_artist=True, vert=False)
+    plt.ylabel(_t('model_short', lang), fontsize=14)
+    plt.xlabel(_t('errors', lang), fontsize=14)
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
     plt.xlim(-100, 100)

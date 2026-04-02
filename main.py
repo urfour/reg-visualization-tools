@@ -14,7 +14,14 @@ from utils.losses.pytorch import mse, mae, lin_se, lin_lin, QuadQuad
 from utils.visualization import *
 import numpy as np
 from argparse import ArgumentParser
+from scipy.stats import gaussian_kde
 np.random.seed(0)
+
+
+def _resolve_plot_languages(lang_arg: str):
+    if lang_arg == 'both':
+        return ['en', 'fr']
+    return [lang_arg]
 
 ### Generated datasets
 def train_metrics():
@@ -307,42 +314,149 @@ def train_all():
     train_cmapss()
     train_ai4i()
 
-def plot_all():
+def plot_kde(data : pd.DataFrame, path : str, file_name = 'distribution.pdf', 
+                             models : Union[tuple, str] = 'all', model_index = 0):
+    """ Plot the figure with the probability density of errors for each model alone using KDE
+
+    Parameters:
+    data (pd.DataFrame): The input data containing the actual and predicted values.
+    path (str): The path to save the generated plot(s).
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'distribution.pdf'.
+    models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
+    model_index (int, optional): The index of the model to plot (0 or 1). Defaults to 0.
+    """
+
+    if models == 'all':
+        all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
+        all_metrics_combination = list(itertools.combinations(all_metrics, 2))
+    else:
+        all_metrics_combination = [models]
+        to_save = path
+    for combination in all_metrics_combination:
+        if models == 'all':
+            to_save = join(path, combination[0]+'_'+combination[1])
+        makedirs(to_save, exist_ok=True)
+        extrema = max(abs(data['error_'+combination[model_index]].min()), abs(data['error_'+combination[model_index]].max()))
+        fig, ax = plt.subplots(1, 1, figsize=(10, 8), sharex=True, sharey=True)
+        if model_index == 0:
+            color = 'tab:orange'
+        else:
+            color = 'tab:green'
+        
+        # Calculate KDE
+        errors = data['error_'+combination[model_index]]
+        kde = gaussian_kde(errors)
+        x = np.linspace(-extrema, extrema, 1000)
+        y = kde(x)
+
+        # Plot density
+        ax.plot(x, y, color=color, label='Density')
+        ax.fill_between(x, y, color=color, alpha=0.3)
+
+        ax.grid(True, linestyle='--', alpha=0.5)
+        ticks = ax.get_yticks()
+        ticks = [tick for tick in ticks if tick != 0]
+        ax.set_yticks(ticks)
+
+        ax.set_xlim(-extrema, extrema)
+        ax.set_ylabel('Probability Density')
+        ax.set_xlabel('Errors')
+
+        median = errors.median()
+        median_height = kde(median)[0]
+        
+        ax.axvline(0, color='black')
+        ax.plot([median, median], [0, median_height], color='tab:blue', linestyle='--', label=f'Median')
+        ax.text(median, median_height, f'{median:.2f}', ha='center', va='bottom', color='tab:blue', fontsize=15)
+
+        ax.legend()
+        fig.tight_layout()
+        fig.savefig(join(to_save, file_name))
+
+def plot_histogram(data : pd.DataFrame, path : str, file_name = 'histogram.pdf', 
+                             models : Union[tuple, str] = 'all', model_index = 0):
+    """ Plot the figure with the histogram of errors for each model alone
+    Parameters:
+    data (pd.DataFrame): The input data containing the actual and predicted values.
+    path (str): The path to save the generated plot(s).
+    file_name (str, optional): The name of the file to save the plot. Defaults to 'histogram.pdf'.
+    models (Union[tuple, str], optional): The models to plot. If 'all', plots all combinations of error metrics. Defaults to 'all'.
+    model_index (int, optional): The index of the model to plot (0 or 1). Defaults to 0.
+    """
+    if models == 'all':
+        all_metrics = [col.split('error_')[1] for col in data.columns if 'error_' in col]
+        all_metrics_combination = list(itertools.combinations(all_metrics, 2))
+    else:
+        all_metrics_combination = [models]
+        to_save = path
+    for combination in all_metrics_combination:
+        if models == 'all':
+            to_save = join(path, combination[0]+'_'+combination[1])
+        makedirs(to_save, exist_ok=True)
+        extrema = max(abs(data['error_'+combination[0]].min()), abs(data['error_'+combination[0]].max()),
+                       abs(data['error_'+combination[1]].min()), abs(data['error_'+combination[1]].max()))
+        fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+        if model_index == 0:
+            color = 'tab:orange'
+        else:
+            color = 'tab:green'
+        ax.hist(data['error_'+combination[model_index]], bins=30, color=color, alpha=0.7, density=False)
+        ax.set_xlim(-extrema, extrema)
+        ax.set_ylabel('Counts')
+        ax.set_xlabel('Errors')
+        ax.grid(True, linestyle='--', alpha=0.5)
+        ticks = ax.get_yticks()
+        ticks = [tick for tick in ticks if tick != 0]
+        ax.set_yticks(ticks)
+
+        median = data['error_'+combination[model_index]].median()
+        ax.axvline(0, color='black')
+        ax.axvline(median, color='tab:blue', linestyle='--', label=f'Median')
+        ax.text(median, ax.get_ylim()[1]*0.9, f'{median:.2f}', ha='center', va='bottom', color='tab:blue', fontsize=15)
+        ax.legend()
+        fig.tight_layout()
+        fig.savefig(join(to_save, file_name))
+
+
+def plot_all(language: str = 'en', output_path: str = 'all_fig'):
     """ Generate all plots """
     df_biases = pd.read_csv('results/metrics_biases.csv')
     df_under_over = pd.read_csv('results/under_over.csv')
     df_diff_errors = pd.read_csv('results/different_errors.csv')
     df_cmapss = pd.read_csv('results/cmapss_errors.csv')
-    # df_apartments = pd.read_csv('results/apartments_results.csv')
+    df_apartments = pd.read_csv('results/apartments_results.csv')
     df_ai4i = pd.read_csv('results/ai4i2020_results.csv')
-    path = 'all_fig'
-    models_cmapss = ('A1', 'A10')
+    df_seoul = pd.read_csv('results/seoul_results.csv')
+    path = output_path
+    models_cmapss = ('D1', 'D10')
     other_models = ('model1', 'model2')
 
+    # plot_histogram(data=df_cmapss, path=path, models=models_cmapss, file_name='cmapss_histogram.pdf', model_index=0)
     # Generated datasets
-    plot_distributions(data=df_biases, path=path, models=other_models, file_name='fig1.pdf', labels=('B1', 'B2'), share_axes=False)
-    plot_distributions(data=df_under_over, path=path, models=other_models, file_name='fig2.pdf', labels=('C1', 'C2'))
-    plot_diff_distributions(data=df_diff_errors, path=path, models=other_models, file_name='fig3.pdf')
+    plot_distributions(data=df_biases, path=path, models=other_models, file_name='fig1.pdf', labels=('A1', 'A2'), share_axes=False, use_log_scale=True, lang=language)
+    plot_distributions(data=df_under_over, path=path, models=other_models, file_name='fig2.pdf', labels=('B1', 'B2'), lang=language)
+    plot_diff_distributions(data=df_diff_errors, path=path, models=other_models, file_name='fig3.pdf', lang=language)
     # Real datasets
-    plot_predicted_real(data=df_cmapss, target_name='RUL', path=path, models=models_cmapss, file_name='fig4.pdf')
-    plot_predicted_real_multiple(data=df_cmapss, target_name='RUL', path=path, models=models_cmapss, file_name='fig5.pdf', labels=('A1', 'A10'))
-    plot_errors_boxplot(data=df_cmapss, path=path, file_name='fig6.pdf')
-    plot_predicted_real_grid(data=df_cmapss, target_name='RUL', path=path, file_name='fig7.pdf')
-    plot_hourglass(data=df_cmapss, path=path, models=models_cmapss, file_name='fig8.pdf', labels=('A1', 'A10'))
+    plot_predicted_real(data=df_cmapss, target_name='RUL', path=path, models=models_cmapss, file_name='fig4.pdf', lang=language)
+    plot_predicted_real_multiple(data=df_cmapss, target_name='RUL', path=path, models=models_cmapss, file_name='fig5.pdf', labels=('D1', 'D10'), lang=language)
+    plot_errors_boxplot(data=df_cmapss, path=path, file_name='fig6.pdf', lang=language)
+    plot_predicted_real_grid(data=df_cmapss, target_name='RUL', path=path, file_name='fig7.pdf', lang=language)
+    plot_hourglass(data=df_cmapss, path=path, models=models_cmapss, file_name='fig8.pdf', labels=('D1', 'D10'), lang=language)
     # plot_mean_median(data=df_cmapss, path=path, models=models_cmapss, file_name='fig8a.pdf', with_hourglass=False)
     # plot_distributions(data=df_cmapss, path=path, models=models_cmapss, file_name='fig8b.pdf')
-    plot_density(data=df_cmapss, path=path, models=models_cmapss, file_name='fig9.pdf', labels=('A1', 'A10'))
-    plot_hexbins(data=df_cmapss, path=path, models=models_cmapss, file_name='fig10.pdf', labels=('A1', 'A10'))
-    plot_with_proximity(data=df_cmapss, path=path, models=models_cmapss, file_name='fig11.pdf', distance_metric='euclidean', labels=('A1', 'A10'))
-    # plot_with_proximity(data=df_apartments, path=path, models=other_models, file_name='fig13.pdf', distance_metric='euclidean', labels=('E1', 'E2'))
-    plot_with_proximity(data=df_cmapss, path=path, models=models_cmapss, file_name='fig12.pdf', distance_metric='mahalanobis', labels=('A1', 'A10'))
-    plot_with_proximity(data=df_ai4i, path=path, models=('LSTM_1', 'LSTM_2'), file_name='fig13.pdf', labels=('E1', 'E2'))
+    plot_density(data=df_cmapss, path=path, models=models_cmapss, file_name='fig9.pdf', labels=('D1', 'D10'), lang=language)
+    plot_hexbins(data=df_cmapss, path=path, models=models_cmapss, file_name='fig10.pdf', labels=('D1', 'D10'), lang=language)
+    plot_with_proximity(data=df_cmapss, path=path, models=models_cmapss, file_name='fig11.pdf', distance_metric='euclidean', labels=('D1', 'D10'), lang=language)
+    plot_with_proximity(data=df_apartments, path=path, models=other_models, file_name='apartments.pdf', distance_metric='euclidean', labels=('E1', 'E2'), lang=language)
+    plot_with_proximity(data=df_cmapss, path=path, models=models_cmapss, file_name='fig12.pdf', distance_metric='mahalanobis', labels=('D1', 'D10'), lang=language)
+    plot_with_proximity(data=df_ai4i, path=path, models=('LSTM_1', 'LSTM_2'), file_name='fig13.pdf', labels=('F1', 'F2'), lang=language)
 
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-t', '--train-dataset', type=str, help='Train the choosen dataset(s). Available: metrics, underover, differrors, apartments, cmapss, all')
     parser.add_argument('-a', '--train-all', action='store_true', help='Train all datasets')
     parser.add_argument('-p', '--plot', action='store_true', help='Generate all plots')
+    parser.add_argument('--lang', choices=['en', 'fr', 'both'], default='en', help='Language for plot labels')
     args = parser.parse_args()
     if args.train_dataset is not None:
         if args.train_dataset == 'all':
@@ -365,7 +479,9 @@ if __name__ == '__main__':
     elif args.train_all:
         train_all()
     if args.plot:
-        plot_all()
+        for lang in _resolve_plot_languages(args.lang):
+            output_path = 'all_fig' if args.lang != 'both' else join('all_fig', lang)
+            plot_all(language=lang, output_path=output_path)
     else:
         if args.train_dataset is None and not args.train_all:
             parser.print_help()
